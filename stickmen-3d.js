@@ -175,10 +175,10 @@
     torsoShape.lineTo(-.29, .405);
     torsoShape.bezierCurveTo(-.225, .455, -.13, .50, -.065, .515);
     torsoShape.quadraticCurveTo(-.035, .545, 0, .565);
-    const torsoEdge = mesh(new T.ShapeGeometry(torsoShape), INK);
+    const torsoEdge = mesh(new T.ShapeGeometry(torsoShape), fx(0x0d0d0d));
     torsoEdge.position.z = .012;
     P.spine.add(torsoEdge);
-    const torsoFill = mesh(new T.ShapeGeometry(torsoShape), PAPER);
+    const torsoFill = mesh(new T.ShapeGeometry(torsoShape), fx(0xf1eee8));
     torsoFill.scale.set(.88, .955, 1);
     torsoFill.position.z = .027;
     P.spine.add(torsoFill);
