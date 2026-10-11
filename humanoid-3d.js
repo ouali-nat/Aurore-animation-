@@ -1,3 +1,5 @@
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
 /* Aurore Animation — studio de personnages humains 3D.
    Modèles procéduraux paramétriques ; aucune image de sprite n'est utilisée pour le corps.
    Chaque partie (tête, cheveux, torse, bras, mains, jambes, chaussures) est un maillage 3D distinct.
@@ -13,11 +15,6 @@ let catalogue = [], currentIndex = 0, current = null, rig = null;
 let scene, camera, renderer, clock, playing = false, elapsed = 0;
 let orbit = { theta: 0.18, phi: 1.43, distance: 5.8, dragging: false, x: 0, y: 0 };
 let recorder = null, recordChunks = [], stopRecordingAt = 0;
-
-if (!window.THREE) {
-  status('Le moteur Three.js n’a pas pu se charger. Vérifie la connexion Internet puis recharge la page.');
-  throw new Error('Three.js unavailable');
-}
 
 function material(color, roughness = .65, metalness = 0) {
   return new THREE.MeshStandardMaterial({ color: hex(color), roughness, metalness });
