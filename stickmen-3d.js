@@ -13,21 +13,27 @@
   const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 
   function limb(len, r0, r1, k) {
-    // Un membre doit lire comme un trait d'encre souple, pas comme deux cylindres
-    // raccordés par une rotule. Une courbe légèrement décentrée adoucit le geste.
+    // Membres épais à contour noir et intérieur clair, raccords adoucis.
     const grp = new T.Group();
-    const bend = len * .055;
+    const bend = len * .018;
     const curve = new T.CatmullRomCurve3([
       new T.Vector3(0, 0, 0),
-      new T.Vector3(bend * .35, -len * .28, 0),
-      new T.Vector3(bend, -len * .62, .002),
+      new T.Vector3(bend * .35, -len * .32, 0),
+      new T.Vector3(bend, -len * .66, 0),
       new T.Vector3(0, -len, 0)
     ]);
-    grp.add(mesh(new T.TubeGeometry(curve, 12, Math.max(r0, r1) * k * .78, 8, false)));
-    // Les extrémités sont petites et fondues dans le trait : plus de grosses boules
-    // qui donnent l'impression d'articulations mécaniques.
-    grp.add(ball(r0 * k * .68));
-    grp.add(place(ball(r1 * k * .72), 0, -len, 0));
+    const outer = Math.max(r0, r1) * k * 1.9;
+    const inner = outer * .76;
+    grp.add(mesh(new T.TubeGeometry(curve, 16, outer, 10, false), INK));
+    grp.add(mesh(new T.TubeGeometry(curve, 16, inner, 10, false), PAPER));
+    const start = Math.max(r0, r1) * k * 1.9;
+    const end = Math.min(r0, r1) * k * 1.9;
+    grp.add(ball(start, INK));
+    grp.add(place(ball(end, INK), 0, -len, 0));
+    const innerStart = ball(start * .76, PAPER);
+    innerStart.position.z = .012;
+    grp.add(innerStart);
+    grp.add(place(ball(end * .76, PAPER), 0, -len, .012));
     return grp;
   }
   const shaft = (wp, a, b, r) => wp.add(place(cyl(r || .022, r || .022, b - a), 0, (a + b) / 2, 0));
@@ -133,19 +139,55 @@
     const gnd = mesh(new T.CircleGeometry(.6, 24), fx(0x000000, .12)); gnd.rotation.x = -PI / 2; gnd.position.y = .003; root.add(gnd);
     P.hips = place(new T.Group(), 0, .95, 0); root.add(P.hips);
     for (const s of [-1, 1]) {
-      const hip = place(new T.Group(), s * .075, 0, 0, 0, 0, s < 0 ? -.105 : .14); P.hips.add(hip); hip.add(limb(.47, .042, .032, k));
-      const knee = place(new T.Group(), 0, -.47, 0, 0, 0, s < 0 ? .075 : -.09); hip.add(knee); knee.add(limb(.47, .032, .024, k));
-      // Pieds fins, arrondis et orientés différemment : la pose n'est pas symétrique.
-      const foot = place(mesh(new T.SphereGeometry(.055 * k, 12, 8)), s < 0 ? -.025 : .035, -.49, .075, 0, 0, s < 0 ? -.12 : .16); foot.scale.set(1.7, .62, 1); knee.add(foot);
+      // Jambes écartées en V : cuisses obliques, mollets plus verticaux.
+      const hip = place(new T.Group(), s * .075, 0, 0, 0, 0, s < 0 ? -.43 : .43);
+      hip.userData.baseZ = s < 0 ? -.43 : .43;
+      P.hips.add(hip); hip.add(limb(.47, .068, .055, k));
+      const knee = place(new T.Group(), 0, -.47, 0, 0, 0, s < 0 ? .30 : -.30);
+      knee.userData.baseZ = s < 0 ? .30 : -.30;
+      hip.add(knee); knee.add(limb(.47, .055, .042, k));
+      const foot = place(mesh(new T.SphereGeometry(.067 * k, 16, 10), INK), s < 0 ? -.015 : .02, -.485, .075, 0, 0, s < 0 ? -.14 : .14);
+      foot.scale.set(1.75, .62, 1);
+      const sole = place(mesh(new T.SphereGeometry(.051 * k, 16, 10), PAPER), s < 0 ? -.015 : .02, -.478, .091, 0, 0, s < 0 ? -.14 : .14);
+      sole.scale.set(1.65, .48, .78);
+      knee.add(foot); knee.add(sole);
       P[s < 0 ? 'hipL' : 'hipR'] = hip; P[s < 0 ? 'kneeL' : 'kneeR'] = knee;
     }
     P.spine = new T.Group(); P.hips.add(P.spine);
-    P.spine.add(place(cyl(.04 * k, .03 * k, .5), 0, .25, 0)); P.spine.add(place(ball(.04 * k), 0, 0, 0));
+    const torsoShape = new T.Shape();
+    torsoShape.moveTo(0, .565);
+    torsoShape.quadraticCurveTo(.035, .545, .065, .515);
+    torsoShape.bezierCurveTo(.13, .50, .225, .455, .29, .405);
+    torsoShape.lineTo(.33, .345);
+    torsoShape.quadraticCurveTo(.33, .30, .28, .245);
+    torsoShape.lineTo(.16, .12);
+    torsoShape.quadraticCurveTo(.125, .085, .12, .045);
+    torsoShape.lineTo(.085, .012);
+    torsoShape.lineTo(.035, -.085);
+    torsoShape.quadraticCurveTo(0, -.13, -.035, -.085);
+    torsoShape.lineTo(-.085, .012);
+    torsoShape.lineTo(-.12, .045);
+    torsoShape.quadraticCurveTo(-.125, .085, -.16, .12);
+    torsoShape.lineTo(-.28, .245);
+    torsoShape.quadraticCurveTo(-.33, .30, -.33, .345);
+    torsoShape.lineTo(-.29, .405);
+    torsoShape.bezierCurveTo(-.225, .455, -.13, .50, -.065, .515);
+    torsoShape.quadraticCurveTo(-.035, .545, 0, .565);
+    const torsoEdge = mesh(new T.ShapeGeometry(torsoShape), INK);
+    torsoEdge.position.z = .012;
+    P.spine.add(torsoEdge);
+    const torsoFill = mesh(new T.ShapeGeometry(torsoShape), PAPER);
+    torsoFill.scale.set(.88, .955, 1);
+    torsoFill.position.z = .027;
+    P.spine.add(torsoFill);
     P.head = place(new T.Group(), 0, .53, 0); P.spine.add(P.head); P.head.add(place(headMesh(c.head), 0, .19, 0));
     for (const s of [-1, 1]) {
-      const sh = place(new T.Group(), s * .045, .47, 0, 0, 0, s < 0 ? .045 : -.035); P.spine.add(sh); sh.add(limb(.3, .032, .026, k));
-      const el = place(new T.Group(), 0, -.3, 0, 0, 0, s < 0 ? -.055 : .07); sh.add(el); el.add(limb(.3, .026, .02, k));
-      const hand = place(new T.Group(), s < 0 ? -.012 : .012, -.3, 0, 0, 0, s < 0 ? -.12 : .1); el.add(hand); hand.add(ball(.026 * k));
+      const sh = place(new T.Group(), s * .265, .365, 0); P.spine.add(sh);
+      sh.add(limb(.31, .052, .043, k));
+      const el = place(new T.Group(), 0, -.31, 0); sh.add(el); el.add(limb(.29, .043, .034, k));
+      const hand = place(new T.Group(), 0, -.29, 0); el.add(hand);
+      hand.add(ball(.052 * k, INK));
+      const handFill = ball(.038 * k, PAPER); handFill.position.z = .014; hand.add(handFill);
       P[s < 0 ? 'armL' : 'armR'] = sh; P[s < 0 ? 'elbowL' : 'elbowR'] = el; P[s < 0 ? 'handL' : 'handR'] = hand;
     }
     const attach = (H, w) => { const wp = new T.Group(); wp.rotation.x = PI / 2; H.add(wp); const u = W[w](wp); if (u) upd.push(u); };
@@ -184,6 +226,13 @@
     P.armL.rotation.set(B.aLx * R, 0, -B.aLz * R); P.elbowL.rotation.x = -B.eL * R;
     P.armR.rotation.set(B.aRx * R, 0, B.aRz * R); P.elbowR.rotation.x = -B.eR * R;
     P.hipL.rotation.x = B.hL * R; P.kneeL.rotation.x = B.kL * R; P.hipR.rotation.x = B.hR * R; P.kneeR.rotation.x = B.kR * R;
+    const swing = a === 'walk' ? Math.sin(t * 4) * .22 : a === 'run' ? Math.sin(t * 8) * .34 : 0;
+    const bendL = a === 'walk' ? Math.max(0, Math.sin(t * 4)) * .14 : a === 'run' ? Math.max(0, Math.sin(t * 8)) * .26 : 0;
+    const bendR = a === 'walk' ? Math.max(0, -Math.sin(t * 4)) * .14 : a === 'run' ? Math.max(0, -Math.sin(t * 8)) * .26 : 0;
+    P.hipL.rotation.z = P.hipL.userData.baseZ - swing;
+    P.hipR.rotation.z = P.hipR.userData.baseZ + swing;
+    P.kneeL.rotation.z = P.kneeL.userData.baseZ + bendL;
+    P.kneeR.rotation.z = P.kneeR.userData.baseZ - bendR;
     o.fx.forEach(f => f(t, B.k));
   };
 })(window);
