@@ -1,0 +1,21 @@
+{
+ "width": 720,
+ "height": 720,
+ "fps": 30,
+ "duration": 6,
+ "background": "#000000",
+ "tracks": [
+  { "sprite": 0, "x": 120, "y": 300, "scale": 2, "start": 0,
+    "anims": [ { "type": "pop" }, { "type": "bounce", "amp": 40, "freq": 1 } ] },
+  { "sprite": 1, "x": 360, "y": 300, "scale": 2, "start": 0.3,
+    "anims": [ { "type": "pop" }, { "type": "sway", "amp": 10, "freq": 0.8 } ] },
+  { "sprite": 2, "x": 600, "y": 300, "scale": 2, "start": 0.6,
+    "anims": [ { "type": "pop" }, { "type": "float", "amp": 18, "freq": 0.6 } ] },
+  { "sprite": 3, "x": 120, "y": 620, "scale": 2, "start": 0.9,
+    "anims": [ { "type": "pop" }, { "type": "squash", "freq": 0.5 }, { "type": "sway", "amp": 5, "freq": 0.5 } ] },
+  { "sprite": 4, "x": 360, "y": 620, "scale": 2, "start": 1.2,
+    "anims": [ { "type": "pop" }, { "type": "bounce", "amp": 70, "freq": 0.7 } ] },
+  { "sprite": 5, "x": 600, "y": 620, "scale": 2, "start": 1.5,
+    "anims": [ { "type": "pop" }, { "type": "shake", "amp": 5 } ] }
+ ]
+}
