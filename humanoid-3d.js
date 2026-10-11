@@ -515,24 +515,24 @@ function applyJSON() {
   try {
     const value=JSON.parse($('json').value);
     if(value && Array.isArray(value.characters)) {
-      if(value.characters.length!==20) throw new Error('Le catalogue doit contenir 20 personnages.');
+      if(value.characters.length<1) throw new Error('Le catalogue est vide : il faut au moins un personnage.');
       catalogue=value.characters;
       currentIndex=clamp(catalogue.findIndex(p=>p.id===current?.id),0,catalogue.length-1);
     } else if(value && typeof value==='object' && value.id) {
       const idx=catalogue.findIndex(p=>p.id===value.id);
-      if(idx<0) throw new Error('ID inconnu. Modifie un personnage existant ou importe un catalogue complet de 20 personnes.');
+      if(idx<0) throw new Error('ID inconnu. Modifie un personnage existant ou importe un catalogue JSON complet.');
       catalogue[idx]=value; currentIndex=idx;
     } else {
-      throw new Error('JSON attendu : un personnage avec son champ id, ou un catalogue {"characters":[...]} de 20 personnages.');
+      throw new Error('JSON attendu : un personnage avec son champ id, ou un catalogue {"characters":[...]}.');
     }
     showCurrent();
-    status('JSON valide et appliqué. Clique sur « Enregistrer les 20 personnages » pour télécharger le catalogue.');
+    status('JSON valide et appliqué. Clique sur « Enregistrer le catalogue » pour télécharger le fichier.');
   } catch(err) {
     status('JSON non appliqué : '+err.message);
   }
 }
 function downloadCatalogue() {
-  const data={version:2,description:'Catalogue de personnages 3D Aurore Animation personnalisable par JSON.',characters:catalogue};
+  const data={version:3,description:'Catalogue de personnages 3D Aurore Animation personnalisable par JSON.',characters:catalogue};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
   const url=URL.createObjectURL(blob), a=document.createElement('a');
   a.href=url; a.download='aurore-personnages-3d.json'; a.click();
@@ -546,9 +546,9 @@ function importJSON(file) {
     try{
       const data=JSON.parse(reader.result);
       const list=Array.isArray(data)?data:data.characters;
-      if(!Array.isArray(list)||list.length!==20) throw new Error('Le fichier doit contenir exactement 20 personnages dans characters.');
+      if(!Array.isArray(list)||list.length<1) throw new Error('Le fichier doit contenir au moins un personnage dans characters.');
       if(list.some(p=>!p||!p.id||!p.name)) throw new Error('Chaque personnage doit posséder id et name.');
-      catalogue=list; currentIndex=0; showCurrent(); status('Catalogue de 20 personnages importé.');
+      catalogue=list; currentIndex=0; showCurrent(); status('Catalogue importé ('+list.length+' personnage'+(list.length>1?'s':'')+').');
     }catch(e){status('Import impossible : '+e.message);}
   };
   reader.onerror=()=>status('Lecture du fichier JSON impossible.');
@@ -675,7 +675,7 @@ try {
   return;
 }
 fetch('./characters-3d.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(data=>{
-  if(!Array.isArray(data.characters)||data.characters.length!==20)throw new Error('Le catalogue ne contient pas exactement 20 personnages.');
+  if(!Array.isArray(data.characters)||data.characters.length<1)throw new Error('Le catalogue est vide.');
   catalogue=data.characters;
   showCurrent();
   resize();
