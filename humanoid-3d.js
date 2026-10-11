@@ -194,9 +194,14 @@ function makeHair(parent, p, headScaleX, headScaleY, headScaleZ) {
   const hc = material(hair.color || '#251c1c', .45);
   const secondary = material(hair.color || '#251c1c', .53);
   const hs = new THREE.Group(); hs.position.set(0,.015,-.005); parent.add(hs);
-  const capHeight = style === 'buzz' ? .23 : style === 'afro' ? .37 : .31;
-  addMesh(hs,new THREE.SphereGeometry(1,40,24,0,Math.PI*2,0,Math.PI/2),hc,[0,.055,-.015],[.405*headScaleX,capHeight*headScaleY,.38*headScaleZ],'hair-cap');
-  if (style === 'buzz') return hs;
+  if (style === 'buzz') {
+    // Very short hair still follows the whole skull silhouette instead of leaving a bare cap-shaped gap.
+    sphere(hs,hc,[0,.375,-.015],[.405*headScaleX,.145*headScaleY,.38*headScaleZ],'buzz-cut');
+    return hs;
+  }
+  // An upper hemisphere covers the scalp while keeping the brows and eyes visible.
+  addMesh(hs,new THREE.SphereGeometry(1,40,24,0,Math.PI*2,0,Math.PI/2),hc,
+    [0,.16,-.015],[.405*headScaleX,.355*headScaleY,.38*headScaleZ],'hair-cap');
   if (style === 'afro') {
     for (let i=0;i<38;i++) {
       const a = i*2.39996, yy = .11 + ((i%7)/7)*.37;
