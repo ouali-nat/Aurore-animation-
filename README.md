@@ -45,3 +45,15 @@ Chaque animation accepte `from` et `to` (temps de la scène en secondes).
 
 - Voix (Piper TTS) et bouche synchronisée
 - Rendu serveur Node + ffmpeg pour de longues vidéos
+
+## Atelier de personnages humains 3D
+
+La page `studio-3d.html` ouvre un atelier complémentaire sans remplacer le moteur 2D existant. Il charge `characters-3d.json`, qui contient 20 personnages humains stylisés et leurs paramètres de morphologie, de visage, de cheveux, de vêtements et d'animation. Le rendu procédural utilise Three.js depuis un CDN et construit des maillages 3D distincts pour la tête, les yeux, le nez, la bouche, les cheveux, le torse, les articulations et les chaussures.
+
+- Ouvre `studio-3d.html` depuis le site déployé ou depuis un serveur web local.
+- Choisis un personnage dans le catalogue, change ses couleurs et sa coiffure, puis modifie son JSON.
+- Les animations de base incluent repos vivant, marche, course, salut, saut, danse, parole, tristesse et pose héroïque.
+- « Enregistrer les 20 personnages » télécharge le catalogue JSON entier ; « Importer JSON » permet de le recharger.
+- « Exporter la vidéo » capture 8 secondes de l'animation dans le format pris en charge par le navigateur.
+
+Les modèles sont des personnages 3D procéduraux personnalisables, et non des sprites. Pour atteindre un rendu de long-métrage, la prochaine étape pourra être d'ajouter des personnages sculptés à haute résolution, des textures PBR, un rig complet avec doigts, des blendshapes faciaux et une synchronisation labiale.
