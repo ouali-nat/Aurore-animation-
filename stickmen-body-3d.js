@@ -1,21 +1,21 @@
-/* Aurore Animation — corpulence des stickmen d'après la référence (jeu de stickmen) :
-   membres épais et arrondis, torse fin, jambes droites en triangle (A) jusqu'aux pieds (mollets NON parallèles),
-   pieds à plat, bras courts en diagonale partant du sommet arrondi du torse (pas de barre plate d'épaules),
-   grosse tête casquée légère et SUSPENDUE (pas de cou), couleur 1 (corps) / couleur 2 (bras), contour blanc ou noir.
+/* Aurore Animation — stickmen 3D d'après le dessin de référence à la main :
+   corps fin, UNE seule couleur pour le corps, les bras et les mains, mains très simples (bout du bras arrondi),
+   jambes fines en haut qui s'élargissent vers le bas comme un trait de pinceau (pieds évasés),
+   jambes droites en triangle (A), grosse tête légère SUSPENDUE (pas de cou), contour blanc ou noir.
    Les armes et effets viennent de stickmen-3d.js (chargé avant) ; ce module reconstruit seulement le corps.
 
    Contour : tous les contours (coques inversées) sont dessinés AVANT les remplissages, sans test de profondeur.
    Résultat : seul le contour extérieur de la silhouette reste visible — plus d'arcs blancs internes. */
 (function (g) {
   const T = g.THREE, PI = Math.PI, R = PI / 180, O = .014;
-  const SPREAD = .30;        // demi-angle du triangle : cuisse ET mollet restent écartés (jambe droite en A)
-  const HIP = .84;           // hauteur du bassin : les pieds posent sur le sol
+  const SPREAD = .30;        // demi-angle du triangle : cuisse ET mollet restent écartés
+  const HIP = .85;           // hauteur du bassin : les pieds posent sur le sol
   const HEAD_Y = .79;        // la tête flotte au-dessus du torse, sans cou
   const hex = h => parseInt(h.slice(1), 16);
   const lum = h => { const n = hex(h); return (.299 * (n >> 16 & 255) + .587 * (n >> 8 & 255) + .114 * (n & 255)) / 255; };
   const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
   const place = (m, x, y, z, rx, ry, rz) => { m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); return m; };
-  // [couleur 1, couleur 2, tête, casque]  (« crest » = ancienne couronne : supprimée, tête nue)
+  // [couleur 1 (corps + bras + mains), couleur 2 (inutilisée), tête, casque]  (« crest » = ancienne couronne : supprimée)
   const PAL = [['#16161c', '#2e2e3a', '#23232b', 'horns'], ['#ffffff', '#111111', '#e9eef7', 'horns'], ['#1f3fff', '#1b2f8a', '#3b8fe0', 'crest'], ['#d62f3a', '#7d1822', '#f0f0f0', 'plain'], ['#f4f1ea', '#b3202a', '#f4f1ea', 'horns'], ['#2f8f46', '#1c5a2c', '#3aa356', 'plain'], ['#f08a1c', '#8d4a0a', '#ffb347', 'crest'], ['#19a7a0', '#0e6a66', '#4bd1c8', 'horns'], ['#8a2be2', '#4a1580', '#b57af0', 'plain'], ['#e8c030', '#8a6f10', '#ffe063', 'crest'], ['#1c7ed6', '#0a3f7a', '#74c0fc', 'horns'], ['#7048e8', '#3b1fa0', '#b197fc', 'crest'], ['#ff5a1f', '#a82a00', '#ffa94d', 'horns'], ['#2ec4ff', '#0b6f99', '#a5e8ff', 'plain'], ['#8b5a2b', '#4a2e12', '#c9955c', 'crest'], ['#ffd400', '#8a7000', '#fff27a', 'horns'], ['#12b886', '#0a6b50', '#63e6be', 'plain'], ['#868e96', '#343a40', '#ced4da', 'crest'], ['#e64980', '#8f1d4b', '#faa2c1', 'horns'], ['#f59f00', '#b34700', '#ffe066', 'plain']];
   (g.CHARACTERS_STICK || []).forEach((c, i) => { const p = PAL[i % PAL.length]; c.c1 = p[0]; c.c2 = p[1]; c.hc = p[2]; c.helm = p[3]; });
 
@@ -24,7 +24,7 @@
     const old = origBuild(c);                                  // armes + effets déjà construits
     const wps = { R: old.P.handR.children.filter(n => n.isGroup), L: old.P.handL.children.filter(n => n.isGroup) };
     const f = h => new T.MeshBasicMaterial({ color: hex(h) });
-    const M = { a: f(c.c1), b: f(c.c2), h: f(c.hc), white: f('#ffffff'), dark: f('#1b2a55'), yel: f('#ffd34a'),
+    const M = { a: f(c.c1), h: f(c.hc), white: f('#ffffff'), dark: f('#1b2a55'), yel: f('#ffd34a'),
       // contour : coque inversée, dessinée en premier et sans profondeur → uniquement la silhouette extérieure
       o: new T.MeshBasicMaterial({ color: lum(c.c1) > .6 ? 0x151515 : 0xffffff, side: T.BackSide, depthTest: false, depthWrite: false }) };
     const ol = geo => { const m = new T.Mesh(geo, M.o); m.renderOrder = -1; return m; };
@@ -32,25 +32,26 @@
     root.scale.setScalar(c.h || 1);
     const gnd = new T.Mesh(new T.CircleGeometry(.6, 24), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .15 })); gnd.rotation.x = -PI / 2; gnd.position.y = .003; root.add(gnd);
     const ball = (r, mat, x, y, z) => { const grp = new T.Group(); grp.add(new T.Mesh(new T.SphereGeometry(r, 20, 14), mat)); grp.add(ol(new T.SphereGeometry(r + O, 20, 14))); return place(grp, x || 0, y || 0, z || 0); };
-    const tube = (r0, r1, len, mat) => {                      // origine en haut, s'étend vers -y, bouts arrondis, contour
+    const tube = (r0, r1, len, mat) => {                      // origine en haut, s'étend vers -y, bouts arrondis, contour ; r1 > r0 = s'évase vers le bas
       const grp = new T.Group();
       grp.add(place(new T.Mesh(new T.CylinderGeometry(r0, r1, len, 20), mat), 0, -len / 2, 0));
       grp.add(place(ol(new T.CylinderGeometry(r0 + O, r1 + O, len, 20)), 0, -len / 2, 0));
       grp.add(ball(r0, mat), ball(r1, mat, 0, -len, 0));
       return grp;
     };
-    const LIMB = .058 * k;                                    // épaisseur commune → jonctions lisses (pas de « boules »)
-    const LEG = .054 * k;                                     // haut des jambes = bas du torse → aucun rond au bassin
+    const TOR = .044 * k;                                     // torse fin, comme sur le dessin
+    const ARM = .038 * k;                                     // bras fins, une seule couleur
+    const THIGH = .044 * k, FOOT = .068 * k;                  // jambe fine en haut → pied large (trait de pinceau)
     P.hips = place(new T.Group(), 0, HIP, 0); root.add(P.hips);
-    for (const s of [-1, 1]) {                                // jambes droites en A : cuisse + mollet écartés, pied posé à plat
-      const hip = place(new T.Group(), 0, 0, 0, 0, 0, -s * SPREAD); P.hips.add(hip); hip.add(tube(LEG, LEG, .42, M.a));
-      const knee = place(new T.Group(), 0, -.42, 0); hip.add(knee); knee.add(tube(LEG, .052 * k, .4, M.a));   // pas de compensation : le mollet suit le triangle
+    for (const s of [-1, 1]) {                                // jambes droites en A, évasées vers le pied
+      const hip = place(new T.Group(), 0, 0, 0, 0, 0, -s * SPREAD); P.hips.add(hip); hip.add(tube(THIGH, .05 * k, .42, M.a));
+      const knee = place(new T.Group(), 0, -.42, 0); hip.add(knee); knee.add(tube(.05 * k, FOOT, .4, M.a));   // le mollet s'élargit jusqu'au pied
       const ankle = place(new T.Group(), 0, -.4, 0, 0, 0, s * SPREAD); knee.add(ankle);                       // annule l'écart → pied horizontal
-      ankle.add(place(tube(.052 * k, .048 * k, .13, M.a), 0, 0, 0, -PI / 2, 0, 0));                          // pied : capsule vers l'avant
+      ankle.add(place(tube(FOOT, FOOT * .85, .1, M.a), 0, 0, 0, -PI / 2, 0, 0));                            // bout du pied large, vers l'avant
       P[s < 0 ? 'hipL' : 'hipR'] = hip; P[s < 0 ? 'kneeL' : 'kneeR'] = knee;
     }
     P.spine = new T.Group(); P.hips.add(P.spine);
-    P.spine.add(place(tube(LIMB, LEG, .66, M.a), 0, .66, 0));                                   // torse : sommet arrondi, pas de barre plate, pas de cou
+    P.spine.add(place(tube(TOR, TOR, .66, M.a), 0, .66, 0));                                    // torse : sommet arrondi, pas de barre plate, pas de cou
     P.head = place(new T.Group(), 0, HEAD_Y, 0); P.spine.add(P.head);                                // tête suspendue, petit vide sous le menton
     const H = place(new T.Group(), 0, .19, 0); P.head.add(H);
     H.add(ball(.19, M.h));
@@ -59,10 +60,10 @@
       const v = new T.Mesh(new T.BoxGeometry(.3, .09, .08), M.dark); H.add(place(v, 0, .02, .16));
       for (const s of [-1, 1]) H.add(place(new T.Mesh(new T.SphereGeometry(.028, 10, 8), M.yel), s * .07, .02, .205));
     }
-    for (const s of [-1, 1]) {                                // bras courts en diagonale, partent tout près du sommet du torse (épaule en V)
-      const sh = place(new T.Group(), s * .03, .65, 0); P.spine.add(sh); sh.add(tube(LIMB, .056 * k, .3, M.b));
-      const el = place(new T.Group(), 0, -.3, 0); sh.add(el); el.add(tube(.056 * k, .054 * k, .28, M.b));
-      const hand = place(new T.Group(), 0, -.28, 0); el.add(hand); hand.add(ball(.06 * k, M.b));
+    for (const s of [-1, 1]) {                                // bras fins en diagonale, même couleur que le corps ; main = simple bout du bras
+      const sh = place(new T.Group(), s * .03, .65, 0); P.spine.add(sh); sh.add(tube(ARM, ARM, .3, M.a));
+      const el = place(new T.Group(), 0, -.3, 0); sh.add(el); el.add(tube(ARM, ARM * .9, .28, M.a));
+      const hand = place(new T.Group(), 0, -.28, 0); el.add(hand);                                    // point d'accroche de l'arme, aucune forme ajoutée
       P[s < 0 ? 'armL' : 'armR'] = sh; P[s < 0 ? 'elbowL' : 'elbowR'] = el; P[s < 0 ? 'handL' : 'handR'] = hand;
     }
     wps.R.forEach(w => P.handR.add(w)); wps.L.forEach(w => P.handL.add(w));
