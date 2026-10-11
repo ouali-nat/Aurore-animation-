@@ -1,21 +1,75 @@
 {
- "width": 720,
- "height": 720,
+ "width": 960,
+ "height": 540,
  "fps": 30,
- "duration": 6,
- "background": "#000000",
+ "duration": 42,
+ "worldWidth": 4200,
+ "sky": ["#0b0a22", "#2a1b52"],
+ "ground": { "horizon": 360, "color": "#10261b" },
+ "camera": { "follow": "hero", "lead": 0.4 },
+ "layers": [
+  { "type": "hills", "parallax": 0.08, "y": 300, "amp": 50, "color": "#150f33", "alpha": 0.8 },
+  { "type": "hills", "parallax": 0.18, "y": 340, "amp": 40, "color": "#1b1442", "alpha": 0.8 },
+  { "type": "trees", "kind": "pine", "parallax": 0.3, "spacing": 110, "scale": 0.45, "y": 378, "alpha": 0.3 },
+  { "type": "trees", "kind": "round", "parallax": 0.55, "spacing": 170, "scale": 0.7, "y": 415, "alpha": 0.5 },
+  { "type": "trees", "kind": "pine", "parallax": 0.8, "spacing": 230, "scale": 1.0, "y": 445, "alpha": 0.75 },
+  { "type": "trees", "kind": "round", "parallax": 1.6, "spacing": 600, "scale": 2.4, "y": 600, "alpha": 0.9, "front": true }
+ ],
  "tracks": [
-  { "sprite": 0, "x": 120, "y": 300, "scale": 2, "start": 0,
-    "anims": [ { "type": "pop" }, { "type": "bounce", "amp": 40, "freq": 1 } ] },
-  { "sprite": 1, "x": 360, "y": 300, "scale": 2, "start": 0.3,
-    "anims": [ { "type": "pop" }, { "type": "sway", "amp": 10, "freq": 0.8 } ] },
-  { "sprite": 2, "x": 600, "y": 300, "scale": 2, "start": 0.6,
-    "anims": [ { "type": "pop" }, { "type": "float", "amp": 18, "freq": 0.6 } ] },
-  { "sprite": 3, "x": 120, "y": 620, "scale": 2, "start": 0.9,
-    "anims": [ { "type": "pop" }, { "type": "squash", "freq": 0.5 }, { "type": "sway", "amp": 5, "freq": 0.5 } ] },
-  { "sprite": 4, "x": 360, "y": 620, "scale": 2, "start": 1.2,
-    "anims": [ { "type": "pop" }, { "type": "bounce", "amp": 70, "freq": 0.7 } ] },
-  { "sprite": 5, "x": 600, "y": 620, "scale": 2, "start": 1.5,
-    "anims": [ { "type": "pop" }, { "type": "shake", "amp": 5 } ] }
+  { "sprite": 11, "x": 620, "y": 480, "scale": 2, "start": 1.5,
+    "anims": [ { "type": "pop" }, { "type": "float", "amp": 6, "freq": 0.6 } ] },
+  { "sprite": 25, "x": 1900, "y": 480, "scale": 2, "start": 15,
+    "anims": [ { "type": "pop" }, { "type": "sway", "amp": 6, "freq": 0.7 } ] },
+
+  { "id": "hero", "sprite": 7, "scale": 2.4, "start": 0,
+    "path": [
+      { "t": 0, "x": 80, "y": 480 }, { "t": 8, "x": 1250, "y": 480 },
+      { "t": 14, "x": 1250, "y": 480 }, { "t": 22, "x": 2350, "y": 480 },
+      { "t": 30, "x": 2350, "y": 480 }, { "t": 36, "x": 3000, "y": 480 }
+    ],
+    "anims": [
+      { "type": "pop", "dur": 0.6 },
+      { "type": "walk", "from": 0.6, "to": 8, "amp": 12, "freq": 2.6 },
+      { "type": "jump", "from": 4.2, "dur": 0.9, "h": 120 },
+      { "type": "jump", "from": 6.2, "dur": 0.9, "h": 120 },
+      { "type": "say", "from": 9.5, "to": 11.5, "text": "Salut !" },
+      { "type": "walk", "from": 14, "to": 22, "amp": 12, "freq": 2.6 },
+      { "type": "jump", "from": 17, "dur": 0.8, "h": 100 },
+      { "type": "say", "from": 22.5, "to": 24.5, "text": "Tu pars déjà ?" },
+      { "type": "cry", "from": 24.5, "to": 36 },
+      { "type": "walk", "from": 30, "to": 36, "amp": 6, "freq": 1.6 },
+      { "type": "laugh", "from": 36.5, "to": 42 },
+      { "type": "say", "from": 37, "to": 40, "text": "Ahaha !" }
+    ] },
+
+  { "sprite": 2, "x": 1400, "y": 480, "scale": 2, "start": 7,
+    "anims": [
+      { "type": "pop" },
+      { "type": "sway", "from": 7, "to": 10, "amp": 10, "freq": 1.5 },
+      { "type": "say", "from": 11.5, "to": 13.5, "text": "Bonjour ami !" },
+      { "type": "bounce", "from": 11.5, "to": 14, "amp": 25, "freq": 1.5 },
+      { "type": "float", "amp": 4, "freq": 0.5 }
+    ] },
+
+  { "sprite": 14, "start": 20, "scale": 2,
+    "path": [
+      { "t": 20, "x": 2500, "y": 480 }, { "t": 28, "x": 2500, "y": 480 },
+      { "t": 34, "x": 3500, "y": 480 }
+    ],
+    "anims": [
+      { "type": "pop" },
+      { "type": "say", "from": 25, "to": 28, "text": "Je dois partir..." },
+      { "type": "walk", "from": 28, "to": 34, "amp": 8, "freq": 2.2 },
+      { "type": "sway", "amp": 4, "freq": 0.6 }
+    ] },
+
+  { "sprite": 20, "start": 33, "scale": 2,
+    "path": [ { "t": 33, "x": 3650, "y": 485 }, { "t": 36, "x": 3150, "y": 485 } ],
+    "anims": [
+      { "type": "pop", "dur": 0.3 },
+      { "type": "bounce", "from": 33, "to": 36, "amp": 40, "freq": 3 },
+      { "type": "say", "from": 38, "to": 41, "text": "Haha, regarde !" },
+      { "type": "laugh", "from": 36.5, "to": 42 }
+    ] }
  ]
 }

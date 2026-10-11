@@ -7,14 +7,14 @@
 <style>
 :root{--bg:#07100c;--fg:#d8fbe8;--ac:#2de08f;--card:#0e1d16}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;padding:12px;max-width:760px;margin:auto}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;padding:12px;max-width:960px;margin:auto}
 h1{font-size:20px;margin:4px 0 10px;color:var(--ac)}
 canvas{width:100%;height:auto;background:#000;border:1px solid #1d3a2c;border-radius:10px;display:block}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
 button,label.b{background:var(--ac);color:#04140c;border:0;border-radius:8px;padding:9px 12px;font-weight:600;cursor:pointer}
 button.s,label.b.s{background:var(--card);color:var(--fg);border:1px solid #1d3a2c}
 input[type=file]{display:none}
-textarea{width:100%;height:240px;background:var(--card);color:var(--fg);border:1px solid #1d3a2c;border-radius:8px;padding:8px;font:12px/1.3 monospace}
+textarea{width:100%;height:280px;background:var(--card);color:var(--fg);border:1px solid #1d3a2c;border-radius:8px;padding:8px;font:12px/1.3 monospace}
 #msg{font-size:13px;opacity:.8}
 #gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
 #gal div{background:#000;border:1px solid #1d3a2c;border-radius:6px;text-align:center;font-size:11px;padding:3px}
@@ -26,7 +26,7 @@ h2{font-size:15px;margin:16px 0 6px}
 </head>
 <body>
 <h1>Aurore Animation</h1>
-<canvas id="cv" width="720" height="720"></canvas>
+<canvas id="cv" width="960" height="540"></canvas>
 <div class="row">
 <button id="play">Pause</button>
 <button id="replay" class="s">Rejouer</button>
@@ -43,5 +43,6 @@ h2{font-size:15px;margin:16px 0 6px}
 <h2>Personnages détectés (numéro = champ "sprite")</h2>
 <div id="gal"></div>
 <script src="app.js"></script>
+<script src="world.js"></script>
 </body>
 </html>
