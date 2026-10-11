@@ -256,15 +256,15 @@ function makeHair(parent, p, headScaleX, headScaleY, headScaleZ) {
   }
   return hs;
 }
-function makeFace(head, p, face, headScales) {
+function makeFace(headGroup, p, face, headScales) {
   const skinMat=material(p.skin,.72), shadowSkin=material(p.skin,.77);
   const featureScale=headScales[0];
   // Shape and scale of the underlying skull, with a separate mesh for every facial feature.
-  const head=addMesh(head,headGeometry(face),skinMat,[0,0,0],[.405*(face.width||1)*featureScale,.515*(face.height||1)*headScales[1],.355*headScales[2]],'face-head');
-  head.geometry.computeVertexNormals();
+  const headMesh=addMesh(headGroup,headGeometry(face),skinMat,[0,0,0],[.405*(face.width||1)*featureScale,.515*(face.height||1)*headScales[1],.355*headScales[2]],'face-head');
+  headMesh.geometry.computeVertexNormals();
   for(const side of [-1,1]) {
-    sphere(head.parent,skinMat,[side*.395,0,0],[.083,.12,.08],'ear');
-    sphere(head.parent,shadowSkin,[side*.424,-.005,.035],[.032,.059,.026],'inner-ear');
+    sphere(headGroup,skinMat,[side*.395,0,0],[.083,.12,.08],'ear');
+    sphere(headGroup,shadowSkin,[side*.424,-.005,.035],[.032,.059,.026],'inner-ear');
   }
   const eyeMat=material('#fff7ed',.22), irisMat=material(face.irisColor||'#5d806b',.27,.05);
   const pupilMat=material('#12121a',.15), highlight=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.06,emissive:'#525252'});
@@ -272,7 +272,7 @@ function makeFace(head, p, face, headScales) {
   const eyeS=face.eyeScale||1, spacing=face.eyeSpacing||1;
   const ex=.143*spacing*(face.width||1), eyeY=.063, eyeZ=.324;
   for(const side of [-1,1]) {
-    const eg=new THREE.Group(); eg.position.set(side*ex,eyeY,eyeZ); eg.rotation.z=side*(face.eyeTilt||0)*Math.PI/180; head.parent.add(eg);
+    const eg=new THREE.Group(); eg.position.set(side*ex,eyeY,eyeZ); eg.rotation.z=side*(face.eyeTilt||0)*Math.PI/180; headGroup.add(eg);
     sphere(eg,eyeMat,[0,0,0],[.071*eyeS,.087*eyeS,.037],'eye-white');
     sphere(eg,irisMat,[.008,.001,.032],[.038*eyeS,.046*eyeS,.014],'iris');
     sphere(eg,pupilMat,[.009,.002,.044],[.020*eyeS,.027*eyeS,.009],'pupil');
@@ -288,12 +288,12 @@ function makeFace(head, p, face, headScales) {
   }
   // Soft nose bridge, tip and small nostril shadows create real depth rather than printed lines.
   const noseMat=material(p.skin,.75);
-  sphere(head.parent,noseMat,[0,-.012,.343],[.052,.105,.070*(face.noseSize||1)],'nose-bridge');
-  sphere(head.parent,noseMat,[0,-.075,.395],[.071,.049,.060*(face.noseSize||1)],'nose-tip');
+  sphere(headGroup,noseMat,[0,-.012,.343],[.052,.105,.070*(face.noseSize||1)],'nose-bridge');
+  sphere(headGroup,noseMat,[0,-.075,.395],[.071,.049,.060*(face.noseSize||1)],'nose-tip');
   const nostril=material('#754535',.85);
-  for(const side of [-1,1]) sphere(head.parent,nostril,[side*.035,-.091,.431],[.013,.009,.008],'nostril');
+  for(const side of [-1,1]) sphere(headGroup,nostril,[side*.035,-.091,.431],[.013,.009,.008],'nostril');
   // Inner mouth + sculpted lip curves. Animation changes the inner mouth height.
-  const mouth = new THREE.Group(); mouth.position.set(0,-.175,.343); head.parent.add(mouth);
+  const mouth = new THREE.Group(); mouth.position.set(0,-.175,.343); headGroup.add(mouth);
   const lipMat=material(face.lipColor||'#a6535b',.42), innerMat=material('#4b2028',.8);
   const inner=sphere(mouth,innerMat,[0,0,.028],[.073*(face.mouthWidth||1),.020,.012],'mouth-inner');
   tube(mouth,[[-.078,0,.032],[-.046,.014,.037],[0,.006,.039],[.045,.015,.037],[.078,0,.032]],.008,lipMat,'upper-lip');
@@ -305,9 +305,9 @@ function makeFace(head, p, face, headScales) {
   if(face.freckles) {
     const freckleMat=material('#9b5c47',.9);
     for(const side of [-1,1]) for(let i=0;i<4;i++)
-      sphere(head.parent,freckleMat,[side*(.145+(i%2)*.026),-.03-Math.floor(i/2)*.022,.321],[.006,.006,.004],'freckle');
+      sphere(headGroup,freckleMat,[side*(.145+(i%2)*.026),-.03-Math.floor(i/2)*.022,.321],[.006,.006,.004],'freckle');
   }
-  return {headMesh:head, mouth, mouthInner:inner};
+  return {headMesh, mouth, mouthInner:inner};
 }
 function addAccessories(root, preset, headGroup) {
   const a=preset.outfit?.accessory;
@@ -347,7 +347,7 @@ function createHuman(preset) {
   root.position.y=0;
   const headScale=body.headScale||1;
   const faceNode=new THREE.Group(); faceNode.position.set(0,1.99,0); faceNode.scale.set(headScale,headScale,headScale); root.add(faceNode);
-  const hScales=[face.width||1,face.height||1,1];
+  const hScales=[1,1,1];
   const facial=makeFace(faceNode,preset,face,hScales);
   makeHair(faceNode,preset,face.width||1,face.height||1,1);
   // Torso and waistline.
@@ -554,7 +554,7 @@ function animatePose(time, dt) {
   if(rig.facial?.mouthInner) {
     const m=rig.facial.mouthInner;
     const base=(type==='talk')?(.35+Math.abs(Math.sin(t*12))*.9):(type==='jump'&&rig.root.position.y>.3?.8:.55);
-    m.scale.y=.020*base/.020;
+    m.scale.y=.020*base;
   }
 }
 function renderLoop() {
