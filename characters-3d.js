@@ -6,8 +6,8 @@
   const T = g.THREE;
   const cache = new Map();
   const loader = new T.TextureLoader();
-  const MODEL_HEIGHT = 2.75;
-  const MODEL_WIDTH = MODEL_HEIGHT * 200 / 262;
+  const MODEL_HEIGHT = 4.55;
+  const MODEL_WIDTH = MODEL_HEIGHT * 200 / 450;
   const DEPTH = 0.15;
   const LAYERS = 18;
 
@@ -19,12 +19,12 @@
 
   function buildAssets(c) {
     if (cache.has(c.id)) return cache.get(c.id);
-    if (typeof g.drawCharacter !== 'function') {
-      throw new Error('Le dessin SVG original drawCharacter() est introuvable.');
+    if (typeof g.drawCharacterFull !== 'function') {
+      throw new Error('Le dessin vectoriel complet drawCharacterFull() est introuvable.');
     }
 
-    const sw = 1024, sh = Math.round(sw * 262 / 200);
-    let svg = g.drawCharacter(c, sw);
+    const sw = 1024, sh = Math.round(sw * 450 / 200);
+    let svg = g.drawCharacterFull(c, sw);
     // SVGLoader/TextureLoader doit recevoir des dimensions explicites pour mobile et desktop.
     svg = svg.replace('width="' + sw + '"', 'width="' + sw + '" height="' + sh + '"');
     const uri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
