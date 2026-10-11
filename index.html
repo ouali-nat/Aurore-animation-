@@ -31,7 +31,7 @@ h2{font-size:15px;margin:16px 0 6px}
 <button id="play">Pause</button>
 <button id="replay" class="s">Rejouer</button>
 <button id="rec">Exporter la vidéo</button>
-<label class="b s">Planche<input id="file" type="file" accept="image/*"></label>
+<label class="b s">Planche (facultatif)<input id="file" type="file" accept="image/*"></label>
 <span id="tm">0.0 s</span>
 </div>
 <div id="msg">Chargement…</div>
@@ -40,9 +40,10 @@ h2{font-size:15px;margin:16px 0 6px}
 <h2>Scène (JSON)</h2>
 <textarea id="json" spellcheck="false"></textarea>
 <div class="row"><button id="apply">Appliquer</button></div>
-<h2>Personnages détectés (numéro = champ "sprite")</h2>
+<h2>Personnages de la planche (numéro = champ "sprite")</h2>
 <div id="gal"></div>
 <script src="app.js"></script>
 <script src="world.js"></script>
+<script src="characters.js"></script>
 </body>
 </html>

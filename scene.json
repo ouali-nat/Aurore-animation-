@@ -16,12 +16,12 @@
   { "type": "trees", "kind": "round", "parallax": 1.6, "spacing": 600, "scale": 2.4, "y": 600, "alpha": 0.9, "front": true }
  ],
  "tracks": [
-  { "sprite": 11, "x": 620, "y": 480, "scale": 2, "start": 1.5,
-    "anims": [ { "type": "pop" }, { "type": "float", "amp": 6, "freq": 0.6 } ] },
-  { "sprite": 25, "x": 1900, "y": 480, "scale": 2, "start": 15,
-    "anims": [ { "type": "pop" }, { "type": "sway", "amp": 6, "freq": 0.7 } ] },
+  { "char": { "model": "blob", "color": "#ffa94d", "seed": 3 }, "x": 620, "y": 480, "scale": 2.4, "start": 1.5,
+    "anims": [ { "type": "pop" }, { "type": "wave", "from": 1.5, "to": 6 } ] },
+  { "char": { "model": "blob", "color": "#b794ff", "seed": 5 }, "x": 1900, "y": 480, "scale": 2.4, "start": 15,
+    "anims": [ { "type": "pop" }, { "type": "dance", "from": 16, "to": 22, "freq": 1.6 } ] },
 
-  { "id": "hero", "sprite": 7, "scale": 2.4, "start": 0,
+  { "id": "hero", "char": { "model": "bulb", "color": "#2de08f", "seed": 0 }, "scale": 1.7, "start": 0,
     "path": [
       { "t": 0, "x": 80, "y": 480 }, { "t": 8, "x": 1250, "y": 480 },
       { "t": 14, "x": 1250, "y": 480 }, { "t": 22, "x": 2350, "y": 480 },
@@ -29,29 +29,29 @@
     ],
     "anims": [
       { "type": "pop", "dur": 0.6 },
-      { "type": "walk", "from": 0.6, "to": 8, "amp": 12, "freq": 2.6 },
+      { "type": "walk", "from": 0.6, "to": 8, "amp": 10, "freq": 2.6 },
       { "type": "jump", "from": 4.2, "dur": 0.9, "h": 120 },
       { "type": "jump", "from": 6.2, "dur": 0.9, "h": 120 },
+      { "type": "wave", "from": 9, "to": 11.5 },
       { "type": "say", "from": 9.5, "to": 11.5, "text": "Salut !" },
-      { "type": "walk", "from": 14, "to": 22, "amp": 12, "freq": 2.6 },
+      { "type": "walk", "from": 14, "to": 22, "amp": 10, "freq": 2.6 },
       { "type": "jump", "from": 17, "dur": 0.8, "h": 100 },
       { "type": "say", "from": 22.5, "to": 24.5, "text": "Tu pars déjà ?" },
       { "type": "cry", "from": 24.5, "to": 36 },
-      { "type": "walk", "from": 30, "to": 36, "amp": 6, "freq": 1.6 },
+      { "type": "walk", "from": 30, "to": 36, "amp": 5, "freq": 1.6 },
       { "type": "laugh", "from": 36.5, "to": 42 },
       { "type": "say", "from": 37, "to": 40, "text": "Ahaha !" }
     ] },
 
-  { "sprite": 2, "x": 1400, "y": 480, "scale": 2, "start": 7,
+  { "char": { "model": "robo", "color": "#5ee1ff", "seed": 1 }, "x": 1400, "y": 480, "scale": 1.5, "start": 7,
     "anims": [
       { "type": "pop" },
-      { "type": "sway", "from": 7, "to": 10, "amp": 10, "freq": 1.5 },
+      { "type": "wave", "from": 7, "to": 10 },
       { "type": "say", "from": 11.5, "to": 13.5, "text": "Bonjour ami !" },
-      { "type": "bounce", "from": 11.5, "to": 14, "amp": 25, "freq": 1.5 },
-      { "type": "float", "amp": 4, "freq": 0.5 }
+      { "type": "bounce", "from": 11.5, "to": 14, "amp": 25, "freq": 1.5 }
     ] },
 
-  { "sprite": 14, "start": 20, "scale": 2,
+  { "char": { "model": "tri", "color": "#ff7ad9", "seed": 2 }, "start": 20, "scale": 1.9,
     "path": [
       { "t": 20, "x": 2500, "y": 480 }, { "t": 28, "x": 2500, "y": 480 },
       { "t": 34, "x": 3500, "y": 480 }
@@ -59,15 +59,14 @@
     "anims": [
       { "type": "pop" },
       { "type": "say", "from": 25, "to": 28, "text": "Je dois partir..." },
-      { "type": "walk", "from": 28, "to": 34, "amp": 8, "freq": 2.2 },
-      { "type": "sway", "amp": 4, "freq": 0.6 }
+      { "type": "walk", "from": 28, "to": 34, "amp": 8, "freq": 2.2 }
     ] },
 
-  { "sprite": 20, "start": 33, "scale": 2,
+  { "char": { "model": "cube", "color": "#ffe66d", "seed": 4 }, "start": 33, "scale": 2.3,
     "path": [ { "t": 33, "x": 3650, "y": 485 }, { "t": 36, "x": 3150, "y": 485 } ],
     "anims": [
       { "type": "pop", "dur": 0.3 },
-      { "type": "bounce", "from": 33, "to": 36, "amp": 40, "freq": 3 },
+      { "type": "walk", "from": 33, "to": 36, "amp": 14, "freq": 3.4 },
       { "type": "say", "from": 38, "to": 41, "text": "Haha, regarde !" },
       { "type": "laugh", "from": 36.5, "to": 42 }
     ] }
