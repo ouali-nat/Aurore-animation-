@@ -9,7 +9,19 @@ Site web pour animer des personnages par JSON, avec export vidéo. Gratuit et il
 3. Modifie le JSON de la scène puis clique sur « Appliquer ».
 4. « Exporter la vidéo » télécharge le fichier.
 
-## Personnages par défaut (`"char"`)
+## Personnages humains 2D (`"id"`)
+
+20 personnages illustrés au corps complet (buste dessiné en SVG, bras et jambes articulés), définis dans `characters-2d.js` et branchés sur le moteur par `characters-2d-rig.js`.
+
+Ids : `aurore`, `aicha`, `sana`, `mei`, `amara`, `zara`, `ines`, `chloe`, `lina`, `fatou`, `malik`, `koffi`, `idrissa`, `noah`, `tariq`, `samuel`, `elias`, `gabriel`, `kwame`, `yuki`.
+
+```json
+{ "char": { "id": "aurore" }, "x": 400, "y": 480, "scale": 1.5 }
+```
+
+`studio-2d.html` permet de voir chaque personnage, modifier son JSON (couleurs, coiffure, lunettes, tenue) et exporter le catalogue ou un SVG.
+
+## Personnages par défaut (`"model"`)
 
 Modèles : `robo`, `blob`, `tri`, `bulb`, `cube`.
 
@@ -20,7 +32,7 @@ Modèles : `robo`, `blob`, `tri`, `bulb`, `cube`.
 
 ## Contrôler le corps
 
-Os : `head`, `body`, `armL`, `armR`, `legL`, `legR` (degrés, 0 = le long du corps, positif = écarté vers l'extérieur). Visage : `mouth` (`smile`, `open`, `sad`, `o`, `flat`, `talk`) et `eyes` (`open`, `happy`, `sad`, `blink`).
+Os : `head`, `body`, `armL`, `armR`, `legL`, `legR` (degrés, 0 = le long du corps, positif = écarté vers l'extérieur). Visage : `mouth` (`smile`, `open`, `sad`, `o`, `flat`, `talk`) et `eyes` (`open`, `happy`, `sad`, `blink`) pour les modèles par défaut.
 
 Poses clés (interpolées) :
 
@@ -44,16 +56,5 @@ Chaque animation accepte `from` et `to` (temps de la scène en secondes).
 ## Prochaines étapes
 
 - Voix (Piper TTS) et bouche synchronisée
+- Clignement des yeux et expressions pour les personnages humains 2D
 - Rendu serveur Node + ffmpeg pour de longues vidéos
-
-## Atelier de personnages humains 3D
-
-La page `studio-3d.html` ouvre un atelier complémentaire sans remplacer le moteur 2D existant. Il charge `characters-3d.json`, qui contient 20 personnages humains stylisés et leurs paramètres de morphologie, de visage, de cheveux, de vêtements et d'animation. Le rendu procédural utilise Three.js depuis un CDN et construit des maillages 3D distincts pour la tête, les yeux, le nez, la bouche, les cheveux, le torse, les articulations et les chaussures.
-
-- Ouvre `studio-3d.html` depuis le site déployé ou depuis un serveur web local.
-- Choisis un personnage dans le catalogue, change ses couleurs et sa coiffure, puis modifie son JSON.
-- Les animations de base incluent repos vivant, marche, course, salut, saut, danse, parole, tristesse et pose héroïque.
-- « Enregistrer les 20 personnages » télécharge le catalogue JSON entier ; « Importer JSON » permet de le recharger.
-- « Exporter la vidéo » capture 8 secondes de l'animation dans le format pris en charge par le navigateur.
-
-Les modèles sont des personnages 3D procéduraux personnalisables, et non des sprites. Pour atteindre un rendu de long-métrage, la prochaine étape pourra être d'ajouter des personnages sculptés à haute résolution, des textures PBR, un rig complet avec doigts, des blendshapes faciaux et une synchronisation labiale.
