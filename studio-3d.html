@@ -11,7 +11,7 @@ button.on{background:#e0a82e;color:#1a1210}
 #msg{padding:8px 10px;font-size:13px;background:#fff;line-height:1.45;overflow-wrap:anywhere;flex-shrink:0}
 #msg.error{color:#9b1c1c;background:#fff0f0}
 </style></head><body>
-<div class="bar"><select id="an" aria-label="Animation"><option>idle</option><option>walk</option><option>run</option><option>wave</option><option>dance</option><option>talk</option><option>jump</option><option>pose</option></select><button id="png" disabled>PNG</button></div>
+<div class="bar"><select id="an" aria-label="Animation"><option>idle</option><option>walk</option><option>run</option><option>wave</option><option>dance</option><option>talk</option><option>jump</option><option>pose</option></select><button id="png" disabled>PNG</button><button type="button" data-v="full">En pied</button><button type="button" data-v="hands">Mains</button><button type="button" data-v="legs">Pantalon</button><button type="button" data-v="shoes">Chaussures</button></div>
 <canvas id="cv" aria-label="Prévisualisation du personnage 3D"></canvas>
 <div class="bar" id="names" aria-label="Choisir un personnage"></div>
 <div id="msg" role="status" aria-live="polite">Initialisation de l’atelier 3D…</div>
@@ -31,6 +31,7 @@ button.on{background:#e0a82e;color:#1a1210}
    if(!window.THREE)throw new Error('Three.js a été téléchargé mais la variable THREE est absente.');
    status('Chargement du catalogue des personnages…');
    await loadScript('./characters-2d.js');
+   await loadScript('./characters-2d-limbs.js');
    await loadScript('./characters-3d.js');
    const L=window.CHARACTERS_2D;
    if(!Array.isArray(L)||!L.length)throw new Error('Le catalogue characters-2d.js ne contient aucun personnage.');
@@ -41,7 +42,9 @@ button.on{background:#e0a82e;color:#1a1210}
    const sc=new T.Scene(),cam=new T.PerspectiveCamera(35,1,.1,50);
    sc.add(new T.HemisphereLight(0xffffff,0x887766,.9));
    const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(2,4,3);sc.add(dl);
-   let cur=null,ry=.12,dist=9.5,drag=null;
+   let cur=null,ry=.12,dist=9.5,ty=2.8,drag=null;
+   const VIEWS={full:[9.5,2.8],hands:[4.5,2.15],legs:[5.5,1.4],shoes:[4.5,.55]};
+   document.querySelectorAll('button[data-v]').forEach(b=>b.addEventListener('click',()=>{const v=VIEWS[b.dataset.v];dist=v[0];ty=v[1];}));
    $('#names').innerHTML=L.map((c,i)=>'<button type="button" data-i="'+i+'">'+String(c.name||('Personnage '+(i+1)))+'</button>').join('');
    function pick(i){
     if(!L[i])return;
@@ -69,7 +72,7 @@ button.on{background:#e0a82e;color:#1a1210}
     if(cv.width!==Math.round(w*ren.getPixelRatio())||cv.height!==Math.round(h*ren.getPixelRatio()))ren.setSize(w,h,false);
     cam.aspect=w/h;cam.updateProjectionMatrix();
     if(cur){window.poseCharacter3D(cur,now/1000);cur.root.rotation.y=ry+(cur.pivot||0);}
-    cam.position.set(0,2.92,dist);cam.lookAt(0,2.8,0);ren.render(sc,cam);requestAnimationFrame(loop);
+    cam.position.set(0,ty+.12,dist);cam.lookAt(0,ty,0);ren.render(sc,cam);requestAnimationFrame(loop);
    }
    pick(0);requestAnimationFrame(loop);
   }catch(e){status('Atelier 3D indisponible : '+(e&&e.message||String(e))+' — Recharge la page après avoir vérifié la connexion.',true);console.error(e);}
