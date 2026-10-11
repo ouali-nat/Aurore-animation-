@@ -1,13 +1,23 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
 /* Aurore Animation — studio de personnages humains 3D.
    Modèles procéduraux paramétriques ; aucune image de sprite n'est utilisée pour le corps.
    Chaque partie (tête, cheveux, torse, bras, mains, jambes, chaussures) est un maillage 3D distinct.
 */
-(() => {
+ (async () => {
 'use strict';
 const $ = id => document.getElementById(id);
 const status = message => { $('status').textContent = message; };
+let THREE;
+try {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+} catch (primaryError) {
+  try {
+    THREE = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
+  } catch (fallbackError) {
+    console.error('Aurore 3D: impossible de charger Three.js', primaryError, fallbackError);
+    status('Le moteur 3D ne se charge pas. Vérifie la connexion Internet, puis recharge la page. Si le problème persiste, ouvre le site dans Chrome récent.');
+    return;
+  }
+}
 const deepCopy = value => JSON.parse(JSON.stringify(value));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const hex = value => /^#[0-9a-f]{6}$/i.test(value || '') ? value : '#808080';
@@ -620,7 +630,13 @@ $('animation').addEventListener('change',()=>{
   status('Animation « '+$('animation').selectedOptions[0].textContent+' » sélectionnée. Enregistre le JSON pour la conserver.');
 });
 
-standardScene();
+try {
+  standardScene();
+} catch (err) {
+  console.error('Aurore 3D: initialisation WebGL impossible', err);
+  status('Le navigateur n’a pas pu démarrer la 3D (WebGL) : ' + (err?.message || err) + '. Essaie Chrome récent et vérifie que l’accélération graphique est disponible.');
+  return;
+}
 fetch('./characters-3d.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(data=>{
   if(!Array.isArray(data.characters)||data.characters.length!==20)throw new Error('Le catalogue ne contient pas exactement 20 personnages.');
   catalogue=data.characters;
