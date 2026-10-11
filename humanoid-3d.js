@@ -195,7 +195,7 @@ function makeHair(parent, p, headScaleX, headScaleY, headScaleZ) {
   const secondary = material(hair.color || '#251c1c', .53);
   const hs = new THREE.Group(); hs.position.set(0,.015,-.005); parent.add(hs);
   const capHeight = style === 'buzz' ? .23 : style === 'afro' ? .37 : .31;
-  sphere(hs,hc,[0,.19,-.015],[.405*headScaleX,capHeight*headScaleY,.38*headScaleZ],'hair-cap');
+  addMesh(hs,new THREE.SphereGeometry(1,40,24,0,Math.PI*2,0,Math.PI/2),hc,[0,.055,-.015],[.405*headScaleX,capHeight*headScaleY,.38*headScaleZ],'hair-cap');
   if (style === 'buzz') return hs;
   if (style === 'afro') {
     for (let i=0;i<38;i++) {
