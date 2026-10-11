@@ -187,8 +187,12 @@
   g.drawCharacterFull = function (c, size) {
     const r = rnd(hash(c.id));
     const hb = hairBack(c, r), f = face(c, r), hf = hairFront(c, r);
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 450" width="' + (size || 200) + '" class="ch">' +
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 560" width="' + (size || 200) + '" class="ch">' +
       '<g class="bob"><g class="sway">' + hb + '</g>' + lowerBodyFull(c) + armsFull(c) +
       upperBodyFull(c) + f + hf + phones(c) + '</g></svg>';
+    // Raffiner uniquement le trait de la version plein-corps; les SVG du catalogue 2D restent intacts.
+    return svg.replace(/stroke-width="([\d.]+)"/g, function (_, width) {
+      return 'stroke-width="' + (Math.round(Number(width) * 0.74 * 100) / 100) + '"';
+    });
   };
 })(window);
