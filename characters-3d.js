@@ -11,6 +11,12 @@
   const DEPTH = 0.15;
   const LAYERS = 18;
 
+  function setColorSpace(texture) {
+    // Three.js r149 utilisait "encoding"; les versions recentes utilisent "colorSpace".
+    if ('colorSpace' in texture && T.SRGBColorSpace) texture.colorSpace = T.SRGBColorSpace;
+    else if ('encoding' in texture && T.sRGBEncoding) texture.encoding = T.sRGBEncoding;
+  }
+
   function buildAssets(c) {
     if (cache.has(c.id)) return cache.get(c.id);
     if (typeof g.drawCharacter !== 'function') {
@@ -34,7 +40,7 @@
     };
 
     assets.front = loader.load(uri, function (texture) {
-      texture.colorSpace = T.SRGBColorSpace;
+      setColorSpace(texture);
       texture.needsUpdate = true;
 
       try {
@@ -49,7 +55,7 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-over';
         assets.sideTexture = new T.CanvasTexture(canvas);
-        assets.sideTexture.colorSpace = T.SRGBColorSpace;
+        setColorSpace(assets.sideTexture);
         assets.sideTexture.needsUpdate = true;
         assets.sideMaterial.map = assets.sideTexture;
         assets.sideMaterial.needsUpdate = true;
