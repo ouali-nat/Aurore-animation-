@@ -116,14 +116,16 @@
   // en illustration vectorielle dans le même style de contour que le catalogue.
   function armsFull(c) {
     function oneSide() {
-      let o = '<path d="M37 190 Q27 194 23 211 L13 247 Q10 257 17 264 L17 279 Q16 294 20 306 Q22 313 28 311 Q33 309 30 302 L29 288 L31 265 L39 235 L49 209 Z" fill="' + c.skin + '" stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round"/>';
+      let o = '<path d="M39 190 Q30 197 28 213 L21 248 Q19 258 24 266 L27 288 L27 329 Q27 338 32 338 Q37 337 36 329 L36 291 L40 267 L46 236 L52 211 Z" fill="' + c.skin + '" stroke="' + K + '" stroke-width="2" stroke-linejoin="round"/>';
       if (c.st === 'tee') {
-        o += '<path d="M37 190 Q27 194 24 211 L20 230 L31 235 L40 216 L49 207 Z" fill="' + c.top + '" stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round"/>';
-        o += '<path d="M20 230 Q25 234 32 235" fill="none" stroke="' + K + '" stroke-width="2.2"/>';
+        o += '<path d="M39 190 Q30 197 28 213 L23 234 L35 239 L43 217 L52 211 Z" fill="' + c.top + '" stroke="' + K + '" stroke-width="2" stroke-linejoin="round"/>';
+        o += '<path d="M23 234 Q29 238 35 239" fill="none" stroke="' + K + '" stroke-width="1.4"/>';
       } else {
-        o += '<path d="M37 190 Q27 194 23 211 L14 245 Q12 257 20 263 L30 258 L40 226 L49 207 Z" fill="' + c.top + '" stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round"/>';
-        o += '<path d="M16 255 Q23 261 30 257" fill="none" stroke="' + K + '" stroke-width="2.2"/>';
+        o += '<path d="M39 190 Q30 197 28 213 L22 247 L24 258 L34 263 L41 230 L52 211 Z" fill="' + c.top + '" stroke="' + K + '" stroke-width="2" stroke-linejoin="round"/>';
+        o += '<path d="M23 252 Q28 258 34 259" fill="none" stroke="' + K + '" stroke-width="1.3"/>';
+        if (c.st === 'jacket') o += '<path d="M29 216 L25 236" stroke="#ffffff" stroke-opacity=".28" stroke-width="1.1"/>';
       }
+      o += '<path d="M27 286 L36 285" fill="none" stroke="' + K + '" stroke-opacity=".38" stroke-width="1.1"/>';
       return o;
     }
     return '<g stroke-linecap="round" stroke-linejoin="round">' + oneSide() +
@@ -133,42 +135,52 @@
   function lowerBodyFull(c) {
     const palette = ['#302a31', '#283441', '#3a302d', '#26332f', '#383346', '#30302c'];
     const pants = palette[hash(c.id) % palette.length];
-    return '<g stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round">' +
-      '<path d="M43 286 Q67 298 99 294 L96 337 L88 400 Q70 406 51 400 Z" fill="' + pants + '"/>' +
-      '<path d="M101 294 Q133 298 157 286 L149 400 Q130 406 112 400 L104 337 Z" fill="' + pants + '"/>' +
-      '<path d="M100 302 L100 336" fill="none" stroke-width="1.8"/>' +
-      '<path d="M51 396 Q67 403 88 397 L87 410 Q80 417 67 417 L48 417 Q43 415 46 407 Z" fill="#1a1719"/>' +
-      '<path d="M112 397 Q132 403 149 396 L154 407 Q158 415 152 418 L123 418 Q114 416 113 410 Z" fill="#1a1719"/>' +
-      '<path d="M47 414 Q66 418 86 414 M116 414 Q135 419 153 414" fill="none" stroke="#e6ded1" stroke-width="2.5"/>' +
+    const light = '#f0e8dc';
+    return '<g transform="translate(22 0) scale(.78 1)" stroke="' + K + '" stroke-width="2" stroke-linejoin="round">' +
+      '<path d="M43 318 Q66 329 99 323 L96 382 L87 505 Q72 511 57 504 L53 390 Z" fill="' + pants + '"/>' +
+      '<path d="M101 323 Q134 329 157 318 L147 390 L143 504 Q128 511 112 505 L104 382 Z" fill="' + pants + '"/>' +
+      '<path d="M46 321 Q73 333 98 328 M102 328 Q129 333 154 321" fill="none" stroke="' + light + '" stroke-opacity=".42" stroke-width="1.25"/>' +
+      '<path d="M55 375 Q72 382 94 376 M106 376 Q128 382 145 375" fill="none" stroke="' + K + '" stroke-opacity=".65" stroke-width="1.1"/>' +
+      '<path d="M52 344 Q61 352 75 349 L73 366" fill="none" stroke="' + light + '" stroke-opacity=".32" stroke-width="1.15"/>' +
+      '<path d="M148 344 Q139 352 125 349 L127 366" fill="none" stroke="' + light + '" stroke-opacity=".32" stroke-width="1.15"/>' +
+      '<path d="M100 330 L100 363 M97 387 L91 453 M103 387 L109 453" fill="none" stroke="' + K + '" stroke-opacity=".42" stroke-width="1.15"/>' +
+      '<path d="M58 480 Q72 487 88 480 M112 480 Q128 487 142 480" fill="none" stroke="' + light + '" stroke-opacity=".68" stroke-width="1.3"/>' +
+      '<path d="M57 503 Q72 510 87 504 L88 518 Q82 530 65 531 L43 531 Q38 528 43 520 Z" fill="#1a1719"/>' +
+      '<path d="M112 504 Q128 510 143 503 L157 520 Q162 528 154 531 L130 531 Q113 530 112 518 Z" fill="#1a1719"/>' +
+      '<path d="M45 526 Q65 530 85 525 M116 525 Q135 530 155 526" fill="none" stroke="' + light + '" stroke-width="1.8"/>' +
+      '<path d="M59 516 L69 516 M61 520 L72 520 M126 516 L137 516 M129 520 L140 520" fill="none" stroke="' + light + '" stroke-width="1.25"/>' +
       '</g>';
   }
 
   function upperBodyFull(c) {
     const t = c.top, s = c.skin;
-    let o = '<rect x="88" y="150" width="24" height="20" fill="' + s + '"/>';
-    o += '<path d="M26 286 L26 262 L34 196 Q56 172 88 164 L112 164 Q144 172 166 196 L174 262 L174 286 Q100 303 26 286 Z" fill="' + t + '" stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round"/>';
+    let o = '<rect x="89" y="150" width="22" height="20" fill="' + s + '"/>';
+    o += '<path d="M31 309 L31 263 L40 198 Q58 176 88 164 L112 164 Q142 176 160 198 L169 263 L169 309 Q100 327 31 309 Z" fill="' + t + '" stroke="' + K + '" stroke-width="2" stroke-linejoin="round"/>';
     if (c.st === 'jacket') {
-      o += '<path d="M86 164 Q100 186 114 164 L100 196 Z" fill="#eee"/>';
-      o += '<path d="M100 196 V292 M86 164 L100 196 L114 164" fill="none" stroke="' + K + '" stroke-width="2.5"/>';
-      o += '<path d="M79 222 L95 235 L91 260 M121 222 L105 235 L109 260" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="2"/>';
+      o += '<path d="M87 164 Q100 184 113 164 L101 197 Z" fill="#eee8df"/>';
+      o += '<path d="M101 197 V316 M87 164 L101 197 L113 164" fill="none" stroke="' + K + '" stroke-width="1.8"/>';
+      o += '<path d="M79 223 L94 238 L91 263 M122 223 L107 238 L110 263" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="1.35"/>';
+      o += '<path d="M72 265 L91 270 L89 286 L70 282 Z M129 265 L110 270 L112 286 L131 282 Z" fill="none" stroke="' + K + '" stroke-opacity=".72" stroke-width="1.2"/>';
+      o += '<circle cx="105" cy="238" r="1.7" fill="#f1e8d8"/><circle cx="105" cy="257" r="1.7" fill="#f1e8d8"/><circle cx="105" cy="276" r="1.7" fill="#f1e8d8"/>';
     } else {
-      o += '<path d="M86 164 Q100 186 114 164 Z" fill="' + s + '" stroke="' + K + '" stroke-width="2.5"/>';
+      o += '<path d="M87 164 Q100 184 113 164 Z" fill="' + s + '" stroke="' + K + '" stroke-width="1.8"/>';
     }
     if (c.st === 'hoodie') {
-      o += '<path d="M78 166 Q100 198 122 166" fill="none" stroke="' + K + '" stroke-width="3"/>';
-      o += '<path d="M92 188 V224 M108 188 V224" stroke="#fff" stroke-opacity=".7" stroke-width="3"/>';
-      o += '<path d="M60 242 Q100 226 140 242 L136 260 Q100 273 64 260 Z" fill="' + t + '" stroke="' + K + '" stroke-width="2"/>';
-      o += '<path d="M70 247 Q100 255 130 247" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.5"/>';
+      o += '<path d="M79 166 Q100 194 121 166" fill="none" stroke="' + K + '" stroke-width="2.1"/>';
+      o += '<path d="M93 190 V225 M107 190 V225" stroke="#fff" stroke-opacity=".72" stroke-width="2"/>';
+      o += '<path d="M61 246 Q100 231 139 246 L135 264 Q100 276 65 264 Z" fill="' + t + '" stroke="' + K + '" stroke-width="1.6"/>';
+      o += '<path d="M70 249 Q100 257 130 249 M72 263 Q100 271 128 263" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.1"/>';
+      o += '<path d="M42 302 Q100 318 158 302" fill="none" stroke="#ffffff" stroke-opacity=".24" stroke-width="1.1"/>';
     }
     if (c.st === 'jacket') {
-      o += '<path d="M100 202 V290" fill="none" stroke="#f1e8d8" stroke-opacity=".65" stroke-width="1.5"/>';
-      o += '<circle cx="104" cy="235" r="2" fill="#f1e8d8"/><circle cx="104" cy="251" r="2" fill="#f1e8d8"/>';
+      o += '<path d="M101 205 V316" fill="none" stroke="#f1e8d8" stroke-opacity=".6" stroke-width="1.2"/>';
+      o += '<path d="M44 292 Q56 300 68 299 M132 299 Q144 300 156 292" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="1.1"/>';
     }
     if (c.fl.includes('n')) {
-      o += '<path d="M88 168 Q100 214 112 168" fill="none" stroke="' + GOLD + '" stroke-width="2"/>';
-      o += '<ellipse cx="100" cy="208" rx="5" ry="7" fill="#f4efe6" stroke="' + K + '"/>';
+      o += '<path d="M89 168 Q100 211 111 168" fill="none" stroke="' + GOLD + '" stroke-width="1.7"/>';
+      o += '<ellipse cx="100" cy="207" rx="4.5" ry="6.5" fill="#f4efe6" stroke="' + K + '" stroke-width="1.3"/>';
     }
-    o += '<path d="M42 281 Q100 297 158 281" fill="none" stroke="' + K + '" stroke-opacity=".55" stroke-width="1.8"/>';
+    o += '<path d="M42 306 Q100 322 158 306" fill="none" stroke="' + K + '" stroke-opacity=".45" stroke-width="1.1"/>';
     return o;
   }
 
