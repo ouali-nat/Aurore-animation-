@@ -2,45 +2,72 @@
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atelier 3D — Aurore Animation</title>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#f4efe8;color:#1a1210;display:flex;flex-direction:column;height:100vh}
-#cv{flex:1;width:100%;min-height:0;touch-action:none;cursor:grab}
-.bar{display:flex;gap:6px;padding:8px;overflow-x:auto;background:#fff;align-items:center}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:system-ui,sans-serif;background:#f4efe8;color:#1a1210}
+body{display:flex;flex-direction:column;min-height:100dvh}
+.bar{display:flex;gap:6px;padding:8px;overflow-x:auto;background:#fff;align-items:center;flex-shrink:0}
 button,select{flex:none;padding:8px 12px;border:0;border-radius:8px;background:#1a1210;color:#fff;font-size:14px}
 button.on{background:#e0a82e;color:#1a1210}
-#msg{padding:6px 10px;font-size:13px}
+#cv{display:block;flex:1 1 auto;width:100%;height:calc(100dvh - 120px);min-height:260px;touch-action:none;cursor:grab}
+#msg{padding:8px 10px;font-size:13px;background:#fff;line-height:1.45;overflow-wrap:anywhere;flex-shrink:0}
+#msg.error{color:#9b1c1c;background:#fff0f0}
 </style></head><body>
-<div class="bar"><select id="an"></select><button id="png">PNG</button></div>
-<canvas id="cv"></canvas>
-<div class="bar" id="names"></div>
-<div id="msg" role="status" aria-live="polite">Chargement du moteur 3D et des personnages…</div>
-<script>window.addEventListener("error",function(e){if(e.target&&e.target.tagName==="SCRIPT"){document.querySelector("#msg").textContent="Impossible de charger un script : "+(e.target.src||"script intégré")+". Vérifie la connexion Internet puis recharge la page.";return;}if(e.message){document.querySelector("#msg").textContent="Erreur du moteur 3D : "+e.message;}},true);</script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-<script src="characters-2d.js"></script>
-<script src="characters-3d.js"></script>
+<div class="bar"><select id="an" aria-label="Animation"><option>idle</option><option>walk</option><option>run</option><option>wave</option><option>dance</option><option>talk</option><option>jump</option><option>pose</option></select><button id="png" disabled>PNG</button></div>
+<canvas id="cv" aria-label="Prévisualisation du personnage 3D"></canvas>
+<div class="bar" id="names" aria-label="Choisir un personnage"></div>
+<div id="msg" role="status" aria-live="polite">Initialisation de l’atelier 3D…</div>
 <script>
-const L=window.CHARACTERS_2D,$=s=>document.querySelector(s),cv=$('#cv');
-const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
-const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,.1,50);
-sc.add(new THREE.HemisphereLight(0xffffff,0x887766,.9));
-const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(2,4,3);sc.add(dl);
-let cur=null,ry=.4,dist=6.2,drag=null;
-$('#an').innerHTML=['idle','walk','run','wave','dance','talk','jump','pose'].map(a=>`<option>${a}</option>`).join('');
-$('#an').onchange=()=>{if(cur)cur.anim=$('#an').value};
-$('#names').innerHTML=L.map((c,i)=>`<button data-i="${i}">${c.name}</button>`).join('');
-function pick(i){if(cur)sc.remove(cur.root);cur=buildCharacter3D(L[i]);cur.anim=$('#an').value;sc.add(cur.root);
- document.querySelectorAll('#names button').forEach((b,j)=>b.classList.toggle('on',j==i))}
-$('#names').onclick=e=>{if(e.target.dataset.i)pick(+e.target.dataset.i)};
-cv.onpointerdown=e=>{drag=e.clientX;cv.setPointerCapture(e.pointerId)};
-cv.onpointermove=e=>{if(drag!=null){ry+=(e.clientX-drag)*.01;drag=e.clientX}};
-cv.onpointerup=()=>drag=null;
-cv.onwheel=e=>{e.preventDefault();dist=Math.min(12,Math.max(2.5,dist+e.deltaY*.005))};
-$('#png').onclick=()=>{const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download=(cur?cur.c.id:'perso')+'.png';a.click()};
-function loop(now){
- const w=cv.clientWidth,h=cv.clientHeight;
- if(cv.width!=w||cv.height!=h){ren.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
- if(cur){poseCharacter3D(cur,now/1000);cur.root.rotation.y=ry+(cur.pivot||0)}
- cam.position.set(0,1.3,dist);cam.lookAt(0,1.05,0);
- ren.render(sc,cam);requestAnimationFrame(loop)}
-try { pick(0); $('#msg').textContent = L.length + ' personnages 3D chargés. Glisse pour tourner, molette pour zoomer.'; } catch (err) { $('#msg').textContent = 'Impossible de créer le personnage 3D : ' + err.message; }
-requestAnimationFrame(loop);
+(function(){
+ const $=s=>document.querySelector(s), msg=$('#msg'), cv=$('#cv');
+ function status(text,error){msg.textContent=text;msg.className=error?'error':'';}
+ window.addEventListener('error',e=>{if(e.message)status('Erreur JavaScript : '+e.message,true);},true);
+ window.addEventListener('unhandledrejection',e=>status('Erreur de chargement : '+(e.reason&&e.reason.message||e.reason||'inconnue'),true));
+ function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=()=>resolve();s.onerror=()=>{s.remove();reject(new Error('Échec du chargement de '+src));};document.head.appendChild(s);});}
+ async function loadAny(urls){let last;for(const url of urls){try{await loadScript(url);return;}catch(e){last=e;}}throw last||new Error('Aucune source disponible');}
+ async function start(){
+  try{
+   status('Chargement du moteur 3D…');
+   try{await loadAny(['https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js','https://unpkg.com/three@0.149.0/build/three.min.js']);}
+   catch(e){throw new Error('Le moteur Three.js ne se charge pas. Vérifie la connexion Internet ou le blocage des CDN. '+e.message);}
+   if(!window.THREE)throw new Error('Three.js a été téléchargé mais la variable THREE est absente.');
+   status('Chargement du catalogue des personnages…');
+   await loadScript('./characters-2d.js');
+   await loadScript('./characters-3d.js');
+   const L=window.CHARACTERS_2D;
+   if(!Array.isArray(L)||!L.length)throw new Error('Le catalogue characters-2d.js ne contient aucun personnage.');
+   if(typeof window.buildCharacter3D!=='function'||typeof window.poseCharacter3D!=='function')throw new Error('Le moteur de personnages 3D ne s’est pas initialisé.');
+   const T=window.THREE;
+   const ren=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
+   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+   const sc=new T.Scene(),cam=new T.PerspectiveCamera(35,1,.1,50);
+   sc.add(new T.HemisphereLight(0xffffff,0x887766,.9));
+   const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(2,4,3);sc.add(dl);
+   let cur=null,ry=.4,dist=6.2,drag=null;
+   $('#names').innerHTML=L.map((c,i)=>'<button type="button" data-i="'+i+'">'+String(c.name||('Personnage '+(i+1)))+'</button>').join('');
+   function pick(i){
+    if(!L[i])return;
+    if(cur)sc.remove(cur.root);
+    cur=window.buildCharacter3D(L[i]);cur.anim=$('#an').value;sc.add(cur.root);
+    $('#names').querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on',j===i));
+    $('#png').disabled=false;
+    status((i+1)+'/'+L.length+' — '+L[i].name+' chargé. Glisse pour tourner, pince/roulette pour zoomer.');
+   }
+   $('#an').onchange=()=>{if(cur)cur.anim=$('#an').value;};
+   $('#names').addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(b)pick(Number(b.dataset.i));});
+   cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);});
+   cv.addEventListener('pointermove',e=>{if(drag){ry+=(e.clientX-drag.x)*.01;drag={x:e.clientX,y:e.clientY};}});
+   cv.addEventListener('pointerup',()=>drag=null);cv.addEventListener('pointercancel',()=>drag=null);
+   cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(12,Math.max(2.5,dist+e.deltaY*.005));},{passive:false});
+   $('#png').onclick=()=>{try{const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download=((cur&&cur.c&&cur.c.id)||'personnage')+'.png';a.click();}catch(e){status('Export PNG impossible : '+e.message,true);}};
+   function loop(now){
+    const w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight);
+    if(cv.width!==Math.round(w*ren.getPixelRatio())||cv.height!==Math.round(h*ren.getPixelRatio()))ren.setSize(w,h,false);
+    cam.aspect=w/h;cam.updateProjectionMatrix();
+    if(cur){window.poseCharacter3D(cur,now/1000);cur.root.rotation.y=ry+(cur.pivot||0);}
+    cam.position.set(0,1.3,dist);cam.lookAt(0,1.05,0);ren.render(sc,cam);requestAnimationFrame(loop);
+   }
+   pick(0);requestAnimationFrame(loop);
+  }catch(e){status('Atelier 3D indisponible : '+(e&&e.message||String(e))+' — Recharge la page après avoir vérifié la connexion.',true);console.error(e);}
+ }
+ start();
+})();
 </script></body></html>
