@@ -26,7 +26,7 @@ textarea{display:block;width:100%;min-height:330px;resize:vertical;background:#0
 </head>
 <body>
 <header>
-  <div style="flex:1;min-width:220px"><h1>Atelier des personnages 3D</h1><p>Aurore Animation · personnages humains stylisés, pilotables par JSON</p></div>
+  <div style="flex:1;min-width:220px"><h1>Atelier des personnages 3D</h1><p>Aurore Animation · personnage humain stylisé, pilotable par JSON</p></div>
   <a href="./index.html">← Revenir à l’atelier classique</a>
 </header>
 <main>
@@ -39,13 +39,13 @@ textarea{display:block;width:100%;min-height:330px;resize:vertical;background:#0
     </div>
     <canvas id="stage" width="960" height="600" aria-label="Aperçu 3D du personnage sélectionné"></canvas>
     <div id="status" role="status">Chargement du moteur 3D…</div>
-    <div class="section" style="padding-bottom:6px"><h2>Les 20 personnages</h2><p>Sélectionne un personnage pour l’afficher, le personnaliser et modifier son JSON. Fais glisser dans l’aperçu pour tourner autour du modèle ; utilise la molette pour zoomer.</p></div>
+    <div class="section" style="padding-bottom:6px"><h2>Personnage</h2><p>Fais glisser dans l’aperçu pour tourner autour du modèle ; utilise la molette pour zoomer.</p></div>
     <div id="catalog" class="catalog"></div>
   </section>
   <div class="right">
     <section class="panel section">
       <h2>Réglages rapides</h2>
-      <p>Ces réglages changent le personnage sélectionné. Le JSON ci-dessous reste la source complète de ses paramètres.</p>
+      <p>Ces réglages changent le personnage affiché. Le JSON ci-dessous reste la source complète de ses paramètres.</p>
       <div class="grid2">
         <div class="field"><label for="skin">Teint de peau</label><input id="skin" type="color" value="#956447"></div>
         <div class="field"><label for="hairColor">Couleur des cheveux</label><input id="hairColor" type="color" value="#211713"></div>
@@ -60,13 +60,13 @@ textarea{display:block;width:100%;min-height:330px;resize:vertical;background:#0
     <section class="panel section">
       <h2>Personnage complet — JSON</h2>
       <p>Le modèle est construit en 3D : tête, visage, yeux, cheveux, torse, manches, bras, mains, jambes, chaussures et accessoires sont des objets distincts. Tu peux aussi modifier les propriétés non présentes dans les réglages rapides directement ici.</p>
-      <textarea id="json" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON complet du personnage sélectionné"></textarea>
+      <textarea id="json" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON complet du personnage affiché"></textarea>
       <div class="actions">
         <button id="apply" class="primary">Appliquer le JSON</button>
-        <button id="download">Enregistrer les 20 personnages</button>
+        <button id="download">Enregistrer le catalogue</button>
         <label class="filebtn">Importer JSON<input id="import" class="hidden" type="file" accept=".json,application/json"></label>
       </div>
-      <div class="note">Exemples de propriétés : <code>face.eyeScale</code>, <code>face.eyeSpacing</code>, <code>face.noseSize</code>, <code>hair.style</code>, <code>body.shoulderWidth</code>, <code>outfit.topColor</code>, <code>animation.type</code>, <code>animation.speed</code>. Les modifications du catalogue restent dans cette session jusqu’à l’enregistrement JSON.</div>
+      <div class="note">Exemples de propriétés : <code>face.eyeScale</code>, <code>face.eyeSpacing</code>, <code>face.noseSize</code>, <code>hair.style</code>, <code>body.shoulderWidth</code>, <code>outfit.topColor</code>, <code>outfit.accessories</code>, <code>animation.type</code>, <code>animation.speed</code>. Les modifications restent dans cette session jusqu’à l’enregistrement JSON.</div>
     </section>
   </div>
 </main>
