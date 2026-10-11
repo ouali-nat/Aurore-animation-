@@ -22,18 +22,20 @@
       new T.Vector3(bend, -len * .66, 0),
       new T.Vector3(0, -len, 0)
     ]);
-    const outer = Math.max(r0, r1) * k * 1.9;
+    const outer = Math.max(r0, r1) * k * .92;
     const inner = outer * .76;
     grp.add(mesh(new T.TubeGeometry(curve, 16, outer, 10, false), INK));
-    grp.add(mesh(new T.TubeGeometry(curve, 16, inner, 10, false), PAPER));
-    const start = Math.max(r0, r1) * k * 1.9;
-    const end = Math.min(r0, r1) * k * 1.9;
+    const innerTube = mesh(new T.TubeGeometry(curve, 16, inner, 10, false), PAPER);
+    innerTube.position.z = (outer - inner) * 1.25;
+    grp.add(innerTube);
+    const start = Math.max(r0, r1) * k * .92;
+    const end = Math.min(r0, r1) * k * .92;
     grp.add(ball(start, INK));
     grp.add(place(ball(end, INK), 0, -len, 0));
     const innerStart = ball(start * .76, PAPER);
-    innerStart.position.z = .012;
+    innerStart.position.z = (start - start * .76) * 1.25;
     grp.add(innerStart);
-    grp.add(place(ball(end * .76, PAPER), 0, -len, .012));
+    grp.add(place(ball(end * .76, PAPER), 0, -len, (end - end * .76) * 1.25));
     return grp;
   }
   const shaft = (wp, a, b, r) => wp.add(place(cyl(r || .022, r || .022, b - a), 0, (a + b) / 2, 0));
@@ -148,7 +150,7 @@
       hip.add(knee); knee.add(limb(.47, .055, .042, k));
       const foot = place(mesh(new T.SphereGeometry(.067 * k, 16, 10), INK), s < 0 ? -.015 : .02, -.485, .075, 0, 0, s < 0 ? -.14 : .14);
       foot.scale.set(1.75, .62, 1);
-      const sole = place(mesh(new T.SphereGeometry(.051 * k, 16, 10), PAPER), s < 0 ? -.015 : .02, -.478, .091, 0, 0, s < 0 ? -.14 : .14);
+      const sole = place(mesh(new T.SphereGeometry(.051 * k, 16, 10), PAPER), s < 0 ? -.015 : .02, -.478, .11, 0, 0, s < 0 ? -.14 : .14);
       sole.scale.set(1.65, .48, .78);
       knee.add(foot); knee.add(sole);
       P[s < 0 ? 'hipL' : 'hipR'] = hip; P[s < 0 ? 'kneeL' : 'kneeR'] = knee;
@@ -187,7 +189,7 @@
       const el = place(new T.Group(), 0, -.31, 0); sh.add(el); el.add(limb(.29, .043, .034, k));
       const hand = place(new T.Group(), 0, -.29, 0); el.add(hand);
       hand.add(ball(.052 * k, INK));
-      const handFill = ball(.038 * k, PAPER); handFill.position.z = .014; hand.add(handFill);
+      const handFill = ball(.038 * k, PAPER); handFill.position.z = .024; hand.add(handFill);
       P[s < 0 ? 'armL' : 'armR'] = sh; P[s < 0 ? 'elbowL' : 'elbowR'] = el; P[s < 0 ? 'handL' : 'handR'] = hand;
     }
     const attach = (H, w) => { const wp = new T.Group(); wp.rotation.x = PI / 2; H.add(wp); const u = W[w](wp); if (u) upd.push(u); };
@@ -201,7 +203,7 @@
 
   g.poseCharacter3D = function (o, t) {
     const P = o.P, a = o.anim || 'idle';
-    const B = { aLx: 0, aLz: 10, eL: 15, aRx: -20, aRz: 8, eR: 70, hL: 3, kL: 6, hR: -3, kR: 6, lean: 0, twist: 0, hd: 0, by: 0, k: .6, rz: 0 };
+    const B = { aLx: 0, aLz: 22, eL: 15, aRx: -20, aRz: 22, eR: 70, hL: 3, kL: 6, hR: -3, kR: 6, lean: 0, twist: 0, hd: 0, by: 0, k: .6, rz: 0 };
     const br = Math.sin(t * 2.2) * 2;
     if (a === 'idle') { B.lean = br * .5; B.aLz = 10 + br; B.hd = Math.sin(t * 1.3) * 3; }
     if (a === 'walk' || a === 'run') {
@@ -223,8 +225,8 @@
     if (a === 'pose') { B.lean = 10; B.twist = .4; B.aRx = -140; B.eR = 20; B.aLz = 70; B.eL = 20; B.hL = -28; B.kL = 30; B.hR = 22; B.kR = 10; B.hd = -6; B.rz = .06; }
     P.hips.position.y = .95 + B.by; P.hips.rotation.z = B.rz;
     P.spine.rotation.set(B.lean * R, B.twist, 0); P.head.rotation.x = B.hd * R;
-    P.armL.rotation.set(B.aLx * R, 0, -B.aLz * R); P.elbowL.rotation.x = -B.eL * R;
-    P.armR.rotation.set(B.aRx * R, 0, B.aRz * R); P.elbowR.rotation.x = -B.eR * R;
+    P.armL.rotation.set(B.aLx * R, 0, -B.aLz * R); P.elbowL.rotation.set(-B.eL * R, 0, 45 * R);
+    P.armR.rotation.set(B.aRx * R, 0, B.aRz * R); P.elbowR.rotation.set(-B.eR * R, 0, -45 * R);
     P.hipL.rotation.x = B.hL * R; P.kneeL.rotation.x = B.kL * R; P.hipR.rotation.x = B.hR * R; P.kneeR.rotation.x = B.kR * R;
     const swing = a === 'walk' ? Math.sin(t * 4) * .22 : a === 'run' ? Math.sin(t * 8) * .34 : 0;
     const bendL = a === 'walk' ? Math.max(0, Math.sin(t * 4)) * .14 : a === 'run' ? Math.max(0, Math.sin(t * 8)) * .26 : 0;
