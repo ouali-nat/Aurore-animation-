@@ -1,6 +1,7 @@
 /* Aurore Animation — studio de personnages humains 3D.
    Modèles procéduraux paramétriques ; aucune image de sprite n'est utilisée pour le corps.
    Chaque partie (tête, cheveux, torse, bras, mains, jambes, chaussures) est un maillage 3D distinct.
+   Accessoires : outfit.accessories peut être une liste (headphones, braces, rings, earrings, glasses, wristband, stethoscope).
 */
  (async () => {
 'use strict';
@@ -25,6 +26,13 @@ let catalogue = [], currentIndex = 0, current = null, rig = null;
 let scene, camera, renderer, clock, playing = false, elapsed = 0;
 let orbit = { theta: 0.18, phi: 1.43, distance: 5.8, dragging: false, x: 0, y: 0 };
 let recorder = null, recordChunks = [], stopRecordingAt = 0;
+
+/* Liste normalisée des accessoires : accepte une chaîne (ancien format) ou un tableau. */
+function accessoryList(p) {
+  const a = p?.outfit?.accessories ?? p?.outfit?.accessory;
+  if (!a || a === 'none') return [];
+  return Array.isArray(a) ? a.filter(x => x && x !== 'none') : [a];
+}
 
 function material(color, roughness = .65, metalness = 0) {
   return new THREE.MeshStandardMaterial({ color: hex(color), roughness, metalness });
@@ -177,7 +185,6 @@ function makeClothTorso(parent, preset, cloth) {
     bone(parent,[.018,1.66,.23],[.018,.88,.245],.014,.018,trim,'jacket-seam');
     if(outfit.style === 'hoodie') {
       const hood = sphere(parent, cloth, [0,1.65,-.09],[.22,.22,.17],'hood-back');
-      hood.material = cloth;
       tube(parent,[[-.13,1.68,.12],[-.1,1.76,.06],[0,1.79,.03],[.1,1.76,.06],[.13,1.68,.12]],.025,trim,'hood-edge');
       bone(parent,[-.055,1.26,.25],[-.055,1.03,.29],.009,.009,trim,'hood-string');
       bone(parent,[.055,1.26,.25],[.055,1.03,.29],.009,.009,trim,'hood-string');
@@ -219,11 +226,14 @@ function makeHair(parent, p, headScaleX, headScaleY, headScaleZ) {
     return hs;
   }
   if (style === 'curls' || style === 'messy') {
-    const n = style === 'messy' ? 15 : 23;
+    // Bouclé volumineux : plus de boucles, réparties sur le crâne et les côtés, avec deux tons de brun.
+    const n = style === 'messy' ? 15 : 34;
     for(let i=0;i<n;i++){
-      const a=i*2.39996, rad=.30+(.035*(i%3));
-      sphere(hs,i%4===0?secondary:hc,[Math.cos(a)*rad,.22+((i%5)*.035),Math.sin(a)*rad*.78],
-        style==='messy'?[.105,.105,.095]:[.078,.075,.074],'curl');
+      const a=i*2.39996, rad=.30+(.04*(i%3));
+      const y=.20+((i%5)*.04);
+      const tone = i%3===0 ? secondary : hc;
+      sphere(hs,tone,[Math.cos(a)*rad,y,Math.sin(a)*rad*.78],
+        style==='messy'?[.105,.105,.095]:[.086,.084,.082],'curl');
     }
     if(style==='messy') for(let i=0;i<5;i++) {
       const x=(i-2)*.11;
@@ -310,6 +320,15 @@ function makeFace(headGroup, p, face, headScales) {
   const inner=sphere(mouth,innerMat,[0,0,.028],[.073*(face.mouthWidth||1),.020,.012],'mouth-inner');
   tube(mouth,[[-.078,0,.032],[-.046,.014,.037],[0,.006,.039],[.045,.015,.037],[.078,0,.032]],.008,lipMat,'upper-lip');
   tube(mouth,[[-.071,-.005,.032],[-.04,-.022,.035],[0,-.027,.036],[.042,-.02,.035],[.071,-.005,.032]],.007,lipMat,'lower-lip');
+  // Appareil dentaire : fils et brackets métalliques sur les dents visibles.
+  if (face.braces) {
+    const wire = material('#c9d6de', .3, .6), bracket = material('#e8eef2', .25, .5);
+    tube(mouth,[[-.064,.004,.042],[-.032,.006,.046],[0,.006,.047],[.032,.006,.046],[.064,.004,.042]],.0045,wire,'braces-wire');
+    for (let i = 0; i < 5; i++) {
+      const bx = (i - 2) * .027;
+      sphere(mouth,bracket,[bx,.006,.044],[.011,.009,.007],'braces-bracket');
+    }
+  }
   let defaultExpression=face.expression||'smile';
   if(defaultExpression==='flat') { inner.scale.y=.003; }
   if(defaultExpression==='sad') mouth.rotation.z=Math.PI;
@@ -322,14 +341,23 @@ function makeFace(headGroup, p, face, headScales) {
   return {headMesh, mouth, mouthInner:inner};
 }
 function addAccessories(root, preset, headGroup) {
-  const a=preset.outfit?.accessory;
-  if(!a||a==='none') return;
+  const list=accessoryList(preset);
+  if(!list.length) return;
   const metal=material('#e6c77e',.27,.72), frame=material('#2e3143',.28,.4);
-  if(a==='earrings') for(const s of [-1,1]) {
+  if(list.includes('headphones')) {
+    // Casque : arceau sur le crâne et deux écouteurs sur les oreilles.
+    const band=material('#a9c6e0',.35,.2), cup=material('#8fb8e8',.4,.15), cushion=material('#2a3140',.7);
+    tube(headGroup,[[-.44,.02,.0],[-.40,.30,.0],[-.18,.46,.0],[0,.50,.0],[.18,.46,.0],[.40,.30,.0],[.44,.02,.0]],.035,band,'headphone-band');
+    for(const s of [-1,1]) {
+      sphere(headGroup,cup,[s*.44,-.02,.0],[.085,.135,.095],'headphone-cup');
+      sphere(headGroup,cushion,[s*.44,-.02,.02],[.06,.105,.03],'headphone-cushion');
+    }
+  }
+  if(list.includes('earrings')) for(const s of [-1,1]) {
     const r=new THREE.Mesh(new THREE.TorusGeometry(.027,.006,8,18),metal);
     r.position.set(s*.42,-.12,.015); root.add(r);
   }
-  if(a==='glasses') {
+  if(list.includes('glasses')) {
     for(const s of [-1,1]) {
       const lens=new THREE.Mesh(new THREE.TorusGeometry(.071,.007,8,32),frame);
       lens.position.set(s*.145,.063,.365); headGroup.add(lens);
@@ -338,11 +366,11 @@ function addAccessories(root, preset, headGroup) {
     bone(headGroup,[-.22,.08,.32],[-.26,.05,.20],.008,.007,frame,'glasses-arm');
     bone(headGroup,[.22,.08,.32],[.26,.05,.20],.008,.007,frame,'glasses-arm');
   }
-  if(a==='wristband') for(const s of [-1,1]) {
+  if(list.includes('wristband')) for(const s of [-1,1]) {
     const br=new THREE.Mesh(new THREE.TorusGeometry(.073,.014,8,24),metal);
     br.position.set(s*.38,1.03,.0); br.rotation.x=Math.PI/2; root.add(br);
   }
-  if(a==='stethoscope') {
+  if(list.includes('stethoscope')) {
     const tubing=material('#304f65',.5);
     tube(root,[[-.11,1.53,.23],[-.14,1.36,.27],[-.10,1.17,.29],[0,1.13,.30],[.10,1.17,.29]],.014,tubing,'stethoscope-tube');
     sphere(root,metal,[.1,1.16,.30],[.038,.045,.018],'stethoscope-chestpiece');
@@ -351,6 +379,7 @@ function addAccessories(root, preset, headGroup) {
 function createHuman(preset) {
   const root=new THREE.Group(); root.name=preset.id||preset.name||'humanoid';
   const outfit=preset.outfit||{}, body=preset.body||{}, face=preset.face||{}, hair=preset.hair||{};
+  const accessories=accessoryList(preset);
   const skin=material(preset.skin||'#b78060',.72);
   const top=material(outfit.topColor||'#4c6f9b',.7), bottom=material(outfit.bottomColor||'#283248',.76);
   const trim=material(outfit.trimColor||'#d4bd83',.5,.1), shoe=material(outfit.shoeColor||'#262633',.48);
@@ -399,6 +428,14 @@ function createHuman(preset) {
       bone(hand,[fx,-.085,.008],[fx,-.085-fl,.012],.012,.008,skin,'finger');
     }
     bone(hand,[side*.043,-.04,.006],[side*.071,-.091,.02],.017,.009,skin,'thumb');
+    if (accessories.includes('rings')) {
+      // Bagues : une sur l'annulaire et une sur l'index, posées à la base des doigts.
+      const goldRing = material('#e8c46a', .25, .8);
+      for (const fx of [-.026*(body.handSize||1), .026*(body.handSize||1)]) {
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(.017,.0045,8,18),goldRing);
+        ring.position.set(fx,-.108,.008); ring.rotation.x=Math.PI/2; hand.add(ring);
+      }
+    }
     arms.push({shoulder,hand,side});
   }
   // Outfit details are separate meshes so accessories and clothing colors can be swapped.
@@ -456,7 +493,7 @@ function renderCatalog() {
   catalogue.forEach((p,i)=>{
     const b=document.createElement('button'); b.className='person'+(i===currentIndex?' active':'');
     const name=document.createElement('strong'); name.textContent=p.name||('Personnage '+(i+1));
-    const role=document.createElement('small'); role.textContent=p.role||'Personnage';
+    const role=document.createElement('small'); role.textContent=(p.gender?p.gender+' · ':'')+(p.role||'Personnage');
     b.append(name,role); b.title='Afficher '+(p.name||'ce personnage');
     b.addEventListener('click',()=>{currentIndex=i; showCurrent();});
     el.appendChild(b);
@@ -495,7 +532,7 @@ function applyJSON() {
   }
 }
 function downloadCatalogue() {
-  const data={version:1,description:'Catalogue de personnages 3D Aurore Animation personnalisable par JSON.',characters:catalogue};
+  const data={version:2,description:'Catalogue de personnages 3D Aurore Animation personnalisable par JSON.',characters:catalogue};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
   const url=URL.createObjectURL(blob), a=document.createElement('a');
   a.href=url; a.download='aurore-personnages-3d.json'; a.click();
