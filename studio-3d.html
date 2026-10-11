@@ -7,7 +7,7 @@ body{display:flex;flex-direction:column;min-height:100dvh}
 .bar{display:flex;gap:6px;padding:8px;overflow-x:auto;background:#fff;align-items:center;flex-shrink:0}
 button,select{flex:none;padding:8px 12px;border:0;border-radius:8px;background:#1a1210;color:#fff;font-size:14px}
 button.on{background:#e0a82e;color:#1a1210}
-#cv{display:block;flex:1 1 auto;width:100%;height:calc(100dvh - 120px);min-height:260px;touch-action:none;cursor:grab}
+#cv{display:block;flex:1 1 auto;width:100%;height:calc(100dvh - 120px);min-height:260px;touch-action:none;cursor:grab;background:linear-gradient(#2f78c4,#12396f)}
 #msg{padding:8px 10px;font-size:13px;background:#fff;line-height:1.45;overflow-wrap:anywhere;flex-shrink:0}
 #msg.error{color:#9b1c1c;background:#fff0f0}
 </style></head><body>
@@ -30,6 +30,7 @@ button.on{background:#e0a82e;color:#1a1210}
    catch(e){throw new Error('Le moteur Three.js ne se charge pas. Vérifie la connexion Internet ou le blocage des CDN. '+e.message);}
    if(!window.THREE)throw new Error('Three.js a été téléchargé mais la variable THREE est absente.');
    await loadScript('./stickmen-3d.js');
+   await loadScript('./stickmen-body-3d.js');
    const L=window.CHARACTERS_STICK;
    if(!Array.isArray(L)||!L.length)throw new Error('Le catalogue des stickmen est vide.');
    const T=window.THREE;
