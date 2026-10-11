@@ -41,7 +41,7 @@ button.on{background:#e0a82e;color:#1a1210}
    const sc=new T.Scene(),cam=new T.PerspectiveCamera(35,1,.1,50);
    sc.add(new T.HemisphereLight(0xffffff,0x887766,.9));
    const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(2,4,3);sc.add(dl);
-   let cur=null,ry=.4,dist=6.2,drag=null;
+   let cur=null,ry=.4,dist=7.3,drag=null;
    $('#names').innerHTML=L.map((c,i)=>'<button type="button" data-i="'+i+'">'+String(c.name||('Personnage '+(i+1)))+'</button>').join('');
    function pick(i){
     if(!L[i])return;
@@ -62,14 +62,14 @@ button.on{background:#e0a82e;color:#1a1210}
    cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);});
    cv.addEventListener('pointermove',e=>{if(drag){ry+=(e.clientX-drag.x)*.01;drag={x:e.clientX,y:e.clientY};}});
    cv.addEventListener('pointerup',()=>drag=null);cv.addEventListener('pointercancel',()=>drag=null);
-   cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(12,Math.max(2.5,dist+e.deltaY*.005));},{passive:false});
+   cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(12,Math.max(3.2,dist+e.deltaY*.005));},{passive:false});
    $('#png').onclick=()=>{try{const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download=((cur&&cur.c&&cur.c.id)||'personnage')+'.png';a.click();}catch(e){status('Export PNG impossible : '+e.message,true);}};
    function loop(now){
     const w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight);
     if(cv.width!==Math.round(w*ren.getPixelRatio())||cv.height!==Math.round(h*ren.getPixelRatio()))ren.setSize(w,h,false);
     cam.aspect=w/h;cam.updateProjectionMatrix();
     if(cur){window.poseCharacter3D(cur,now/1000);cur.root.rotation.y=ry+(cur.pivot||0);}
-    cam.position.set(0,1.3,dist);cam.lookAt(0,1.05,0);ren.render(sc,cam);requestAnimationFrame(loop);
+    cam.position.set(0,2.25,dist);cam.lookAt(0,2.22,0);ren.render(sc,cam);requestAnimationFrame(loop);
    }
    pick(0);requestAnimationFrame(loop);
   }catch(e){status('Atelier 3D indisponible : '+(e&&e.message||String(e))+' — Recharge la page après avoir vérifié la connexion.',true);console.error(e);}
