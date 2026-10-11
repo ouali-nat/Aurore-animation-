@@ -47,9 +47,15 @@ button.on{background:#e0a82e;color:#1a1210}
     if(!L[i])return;
     if(cur)sc.remove(cur.root);
     cur=window.buildCharacter3D(L[i]);cur.anim=$('#an').value;sc.add(cur.root);
+    const selected=cur;
     $('#names').querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on',j===i));
     $('#png').disabled=false;
-    status((i+1)+'/'+L.length+' — '+L[i].name+' chargé. Glisse pour tourner, pince/roulette pour zoomer.');
+    status((i+1)+'/'+L.length+' — conservation du dessin 2D original et préparation du relief…');
+    cur.onReady(err=>{
+      if(cur!==selected)return;
+      if(err)status('Le dessin original de '+L[i].name+' ne peut pas être affiché : '+err,true);
+      else status((i+1)+'/'+L.length+' — '+L[i].name+' : dessin original conservé, relief 3D discret. Glisse pour tourner, molette pour zoomer.');
+    });
    }
    $('#an').onchange=()=>{if(cur)cur.anim=$('#an').value;};
    $('#names').addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(b)pick(Number(b.dataset.i));});
