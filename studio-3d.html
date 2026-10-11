@@ -12,7 +12,8 @@ button.on{background:#e0a82e;color:#1a1210}
 <div class="bar"><select id="an"></select><button id="png">PNG</button></div>
 <canvas id="cv"></canvas>
 <div class="bar" id="names"></div>
-<div id="msg">Glisse pour faire tourner, molette pour zoomer.</div>
+<div id="msg" role="status" aria-live="polite">Chargement du moteur 3D et des personnages…</div>
+<script>window.addEventListener("error",function(e){if(e.target&&e.target.tagName==="SCRIPT"){document.querySelector("#msg").textContent="Impossible de charger un script : "+(e.target.src||"script intégré")+". Vérifie la connexion Internet puis recharge la page.";return;}if(e.message){document.querySelector("#msg").textContent="Erreur du moteur 3D : "+e.message;}},true);</script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 <script src="characters-2d.js"></script>
 <script src="characters-3d.js"></script>
@@ -40,5 +41,6 @@ function loop(now){
  if(cur){poseCharacter3D(cur,now/1000);cur.root.rotation.y=ry+(cur.pivot||0)}
  cam.position.set(0,1.3,dist);cam.lookAt(0,1.05,0);
  ren.render(sc,cam);requestAnimationFrame(loop)}
-pick(0);requestAnimationFrame(loop);
+try { pick(0); $('#msg').textContent = L.length + ' personnages 3D chargés. Glisse pour tourner, molette pour zoomer.'; } catch (err) { $('#msg').textContent = 'Impossible de créer le personnage 3D : ' + err.message; }
+requestAnimationFrame(loop);
 </script></body></html>
