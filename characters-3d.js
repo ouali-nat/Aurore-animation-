@@ -6,8 +6,8 @@
   const T = g.THREE;
   const cache = new Map();
   const loader = new T.TextureLoader();
-  const MODEL_HEIGHT = 4.55;
-  const MODEL_WIDTH = MODEL_HEIGHT * 200 / 450;
+  const MODEL_HEIGHT = 5.6;
+  const MODEL_WIDTH = MODEL_HEIGHT * 200 / 560;
   const DEPTH = 0.15;
   const LAYERS = 18;
 
