@@ -1,77 +1,100 @@
-/* Aurore Animation — stickmen 3D d'après le dessin de référence à la main :
-   corps fin, UNE seule couleur pour le corps, les bras et les mains, mains très simples (bout du bras arrondi),
-   jambes fines en haut qui s'élargissent vers le bas comme un trait de pinceau (pieds évasés),
-   jambes droites en triangle (A), grosse tête légère SUSPENDUE (pas de cou), contour blanc ou noir.
-   Les armes et effets viennent de stickmen-3d.js (chargé avant) ; ce module reconstruit seulement le corps.
-
-   Contour : tous les contours (coques inversées) sont dessinés AVANT les remplissages, sans test de profondeur.
-   Résultat : seul le contour extérieur de la silhouette reste visible — plus d'arcs blancs internes. */
+/* Aurore Animation — stickmen 3D style ENCRE (d'après les dessins de référence : stylo/pinceau noir sur papier).
+   - Une seule couleur : noir encre. Corps = trait fin ; membres = coups de pinceau qui gonflent puis s'effilent.
+   - Jambes en A, épaisses vers le pied ; bras fins ; tête pleine (« fill ») ou cercle vide (« ring »).
+   - Hachures d'encre au sol au lieu d'une ombre.
+   - Animation « à deux » (12 images/s) avec un léger tremblement du trait (« boil »), comme un dessin animé à la main.
+     Réglages : window.STICK_INK = { fps: 12, boil: .018 } AVANT le chargement de ce fichier (boil: 0 = trait immobile).
+   Les armes, effets et animations (idle, walk, run, attack, cast, jump, pose) viennent de stickmen-3d.js (chargé avant).
+   API inchangée : buildCharacter3D(c) -> { root, P, c, anim, fx } ; poseCharacter3D(o, t). */
 (function (g) {
-  const T = g.THREE, PI = Math.PI, R = PI / 180, O = .014;
-  const SPREAD = .30;        // demi-angle du triangle : cuisse ET mollet restent écartés
-  const HIP = .85;           // hauteur du bassin : les pieds posent sur le sol
-  const HEAD_Y = .79;        // la tête flotte au-dessus du torse, sans cou
-  const hex = h => parseInt(h.slice(1), 16);
-  const lum = h => { const n = hex(h); return (.299 * (n >> 16 & 255) + .587 * (n >> 8 & 255) + .114 * (n & 255)) / 255; };
+  const T = g.THREE, PI = Math.PI, R = PI / 180;
+  const CFG = g.STICK_INK = Object.assign({ fps: 12, boil: .018 }, g.STICK_INK || {});
+  const SPREAD = .30;        // demi-angle du A des jambes
+  const HIP = .85;           // hauteur du bassin
+  const TORSO = .66;         // longueur du trait du corps
   const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+  const sm = t => t * t * (3 - 2 * t);
   const place = (m, x, y, z, rx, ry, rz) => { m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); return m; };
-  // [couleur 1 (corps + bras + mains), couleur 2 (inutilisée), tête, casque]  (« crest » = ancienne couronne : supprimée)
-  const PAL = [['#16161c', '#2e2e3a', '#23232b', 'horns'], ['#ffffff', '#111111', '#e9eef7', 'horns'], ['#1f3fff', '#1b2f8a', '#3b8fe0', 'crest'], ['#d62f3a', '#7d1822', '#f0f0f0', 'plain'], ['#f4f1ea', '#b3202a', '#f4f1ea', 'horns'], ['#2f8f46', '#1c5a2c', '#3aa356', 'plain'], ['#f08a1c', '#8d4a0a', '#ffb347', 'crest'], ['#19a7a0', '#0e6a66', '#4bd1c8', 'horns'], ['#8a2be2', '#4a1580', '#b57af0', 'plain'], ['#e8c030', '#8a6f10', '#ffe063', 'crest'], ['#1c7ed6', '#0a3f7a', '#74c0fc', 'horns'], ['#7048e8', '#3b1fa0', '#b197fc', 'crest'], ['#ff5a1f', '#a82a00', '#ffa94d', 'horns'], ['#2ec4ff', '#0b6f99', '#a5e8ff', 'plain'], ['#8b5a2b', '#4a2e12', '#c9955c', 'crest'], ['#ffd400', '#8a7000', '#fff27a', 'horns'], ['#12b886', '#0a6b50', '#63e6be', 'plain'], ['#868e96', '#343a40', '#ced4da', 'crest'], ['#e64980', '#8f1d4b', '#faa2c1', 'horns'], ['#f59f00', '#b34700', '#ffe066', 'plain']];
-  (g.CHARACTERS_STICK || []).forEach((c, i) => { const p = PAL[i % PAL.length]; c.c1 = p[0]; c.c2 = p[1]; c.hc = p[2]; c.helm = p[3]; });
+  const INK = new T.MeshBasicMaterial({ color: 0x0b0b0d, side: T.DoubleSide });
+  const PAPER = new T.MeshBasicMaterial({ color: 0xece8e0 });
+  const SHELL = new T.MeshBasicMaterial({ color: 0x0b0b0d, side: T.BackSide });
+
+  // Profil de coup de pinceau : rayon r0 en haut -> rMax (à la position « peak ») -> rEnd en bas.
+  function brushGeo(len, r0, rMax, rEnd, peak) {
+    const pts = [], n = 16;
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      const r = u < peak ? lerp(r0, rMax, sm(u / peak)) : lerp(rMax, rEnd, sm((u - peak) / (1 - peak)));
+      pts.push(new T.Vector2(Math.max(r, .002), -len * u));
+    }
+    return new T.LatheGeometry(pts, 14);
+  }
+  // Origine en haut, s'étend vers -y, bouts arrondis.
+  function stroke(len, r0, rMax, rEnd, peak) {
+    const grp = new T.Group();
+    grp.add(new T.Mesh(brushGeo(len, r0, rMax, rEnd, peak == null ? .5 : peak), INK));
+    grp.add(new T.Mesh(new T.SphereGeometry(r0, 10, 8), INK));
+    grp.add(place(new T.Mesh(new T.SphereGeometry(rEnd, 10, 8), INK), 0, -len, 0));
+    return grp;
+  }
 
   const origBuild = g.buildCharacter3D;
   g.buildCharacter3D = function (c) {
-    const old = origBuild(c);                                  // armes + effets déjà construits
+    const old = origBuild(c);   // armes + effets déjà construits par stickmen-3d.js
     const wps = { R: old.P.handR.children.filter(n => n.isGroup), L: old.P.handL.children.filter(n => n.isGroup) };
-    const f = h => new T.MeshBasicMaterial({ color: hex(h) });
-    const M = { a: f(c.c1), h: f(c.hc), white: f('#ffffff'), dark: f('#1b2a55'), yel: f('#ffd34a'),
-      // contour : coque inversée, dessinée en premier et sans profondeur → uniquement la silhouette extérieure
-      o: new T.MeshBasicMaterial({ color: lum(c.c1) > .6 ? 0x151515 : 0xffffff, side: T.BackSide, depthTest: false, depthWrite: false }) };
-    const ol = geo => { const m = new T.Mesh(geo, M.o); m.renderOrder = -1; return m; };
     const k = c.th || 1, root = new T.Group(), P = {};
     root.scale.setScalar(c.h || 1);
-    const gnd = new T.Mesh(new T.CircleGeometry(.6, 24), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .15 })); gnd.rotation.x = -PI / 2; gnd.position.y = .003; root.add(gnd);
-    const ball = (r, mat, x, y, z) => { const grp = new T.Group(); grp.add(new T.Mesh(new T.SphereGeometry(r, 20, 14), mat)); grp.add(ol(new T.SphereGeometry(r + O, 20, 14))); return place(grp, x || 0, y || 0, z || 0); };
-    const tube = (r0, r1, len, mat) => {                      // origine en haut, s'étend vers -y, bouts arrondis, contour ; r1 > r0 = s'évase vers le bas
-      const grp = new T.Group();
-      grp.add(place(new T.Mesh(new T.CylinderGeometry(r0, r1, len, 20), mat), 0, -len / 2, 0));
-      grp.add(place(ol(new T.CylinderGeometry(r0 + O, r1 + O, len, 20)), 0, -len / 2, 0));
-      grp.add(ball(r0, mat), ball(r1, mat, 0, -len, 0));
-      return grp;
-    };
-    const TOR = .044 * k;                                     // torse fin, comme sur le dessin
-    const ARM = .038 * k;                                     // bras fins, une seule couleur
-    const THIGH = .044 * k, FOOT = .068 * k;                  // jambe fine en haut → pied large (trait de pinceau)
+
+    // Hachures d'encre au sol (comme sur le dessin) au lieu d'une ombre.
+    const hatch = new T.Group();
+    for (let i = 0; i < 9; i++) {
+      const w = .95 - Math.abs(i - 4) * .13 - ((i * 37) % 5) * .02;
+      const m = new T.Mesh(new T.PlaneGeometry(w, .011 + (i % 3) * .004), new T.MeshBasicMaterial({ color: 0x0b0b0d, transparent: true, opacity: .8 - Math.abs(i - 4) * .1 }));
+      m.rotation.x = -PI / 2; m.position.set(((i * 53) % 7 - 3) * .03, .004, (i - 4) * .065);
+      hatch.add(m);
+    }
+    root.add(hatch);
+
     P.hips = place(new T.Group(), 0, HIP, 0); root.add(P.hips);
-    for (const s of [-1, 1]) {                                // jambes droites en A, évasées vers le pied
-      const hip = place(new T.Group(), 0, 0, 0, 0, 0, -s * SPREAD); P.hips.add(hip); hip.add(tube(THIGH, .05 * k, .42, M.a));
-      const knee = place(new T.Group(), 0, -.42, 0); hip.add(knee); knee.add(tube(.05 * k, FOOT, .4, M.a));   // le mollet s'élargit jusqu'au pied
-      const ankle = place(new T.Group(), 0, -.4, 0, 0, 0, s * SPREAD); knee.add(ankle);                       // annule l'écart → pied horizontal
-      ankle.add(place(tube(FOOT, FOOT * .85, .1, M.a), 0, 0, 0, -PI / 2, 0, 0));                            // bout du pied large, vers l'avant
+    for (const s of [-1, 1]) {   // jambes en A : fines en haut, le mollet gonfle vers le pied (trait de pinceau)
+      const hip = place(new T.Group(), 0, 0, 0, 0, 0, -s * SPREAD); P.hips.add(hip);
+      hip.add(stroke(.42, .016 * k, .03 * k, .026 * k, .6));
+      const knee = place(new T.Group(), 0, -.42, 0); hip.add(knee);
+      knee.add(stroke(.40, .026 * k, .064 * k, .036 * k, .82));
+      const ankle = place(new T.Group(), 0, -.4, 0, 0, 0, s * SPREAD); knee.add(ankle);   // annule l'écart : pied à plat
+      ankle.add(place(stroke(.15, .042 * k, .04 * k, .014 * k, .3), 0, 0, 0, -PI / 2, 0, 0));
       P[s < 0 ? 'hipL' : 'hipR'] = hip; P[s < 0 ? 'kneeL' : 'kneeR'] = knee;
     }
     P.spine = new T.Group(); P.hips.add(P.spine);
-    P.spine.add(place(tube(TOR, TOR, .66, M.a), 0, .66, 0));                                    // torse : sommet arrondi, pas de barre plate, pas de cou
-    P.head = place(new T.Group(), 0, HEAD_Y, 0); P.spine.add(P.head);                                // tête suspendue, petit vide sous le menton
+    P.spine.add(place(stroke(TORSO, .016 * k, .024 * k, .015 * k, .45), 0, TORSO, 0));   // trait fin du corps
+    P.head = place(new T.Group(), 0, TORSO, 0); P.spine.add(P.head);
     const H = place(new T.Group(), 0, .19, 0); P.head.add(H);
-    H.add(ball(.19, M.h));
-    if (c.helm !== 'crest') {                                 // « crest » (couronne) supprimé : tête nue
-      for (const s of [-1, 1]) H.add(place(new T.Mesh(new T.ConeGeometry(.035, .2, 5), M.white), s * .13, .2, 0, 0, 0, -s * .5));
-      const v = new T.Mesh(new T.BoxGeometry(.3, .09, .08), M.dark); H.add(place(v, 0, .02, .16));
-      for (const s of [-1, 1]) H.add(place(new T.Mesh(new T.SphereGeometry(.028, 10, 8), M.yel), s * .07, .02, .205));
+    if (c.head === 'ring') {     // cercle vide : papier + contour d'encre (coque inversée), lisible sous tous les angles
+      H.add(new T.Mesh(new T.SphereGeometry(.17, 20, 14), PAPER));
+      H.add(new T.Mesh(new T.SphereGeometry(.186, 20, 14), SHELL));
+    } else {                     // tête pleine, noire
+      H.add(new T.Mesh(new T.SphereGeometry(.18, 20, 14), INK));
     }
-    for (const s of [-1, 1]) {                                // bras fins en diagonale, même couleur que le corps ; main = simple bout du bras
-      const sh = place(new T.Group(), s * .03, .65, 0); P.spine.add(sh); sh.add(tube(ARM, ARM, .3, M.a));
-      const el = place(new T.Group(), 0, -.3, 0); sh.add(el); el.add(tube(ARM, ARM * .9, .28, M.a));
-      const hand = place(new T.Group(), 0, -.28, 0); el.add(hand);                                    // point d'accroche de l'arme, aucune forme ajoutée
+    for (const s of [-1, 1]) {   // bras fins, bout de la main = petit point d'encre
+      const sh = place(new T.Group(), s * .02, TORSO - .04, 0); P.spine.add(sh);
+      sh.add(stroke(.3, .014 * k, .022 * k, .02 * k, .5));
+      const el = place(new T.Group(), 0, -.3, 0); sh.add(el);
+      el.add(stroke(.28, .02 * k, .03 * k, .012 * k, .6));
+      const hand = place(new T.Group(), 0, -.28, 0); el.add(hand);
+      hand.add(new T.Mesh(new T.SphereGeometry(.03 * k, 10, 8), INK));
       P[s < 0 ? 'armL' : 'armR'] = sh; P[s < 0 ? 'elbowL' : 'elbowR'] = el; P[s < 0 ? 'handL' : 'handR'] = hand;
     }
     wps.R.forEach(w => P.handR.add(w)); wps.L.forEach(w => P.handL.add(w));
     return { root, P, c, anim: 'idle', pivot: 0, fx: old.fx, ready: true, error: null, onReady(fn) { fn(null); } };
   };
 
+  const rnd = (f, seed) => { const x = Math.sin(f * 12.9898 + seed * 78.233) * 43758.5453; return x - Math.floor(x); };
+  const JOINTS = ['spine', 'head', 'armL', 'armR', 'elbowL', 'elbowR', 'hipL', 'hipR', 'kneeL', 'kneeR'];
+
   g.poseCharacter3D = function (o, t) {
-    const P = o.P, a = o.anim || 'idle', s4 = Math.sin(t * 4), s8 = Math.sin(t * 8);
+    const P = o.P, a = o.anim || 'idle';
+    const fr = Math.floor(t * CFG.fps); t = fr / CFG.fps;   // animation « à deux » : images fixes, comme un flipbook
+    const s4 = Math.sin(t * 4), s8 = Math.sin(t * 8);
     const B = { aL: 34, aR: 34, aLx: 0, aRx: -20, eL: 10, eR: 60, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, twist: 0, hd: 0, by: 0, k: .6, rz: 0 };
     const br = Math.sin(t * 2.2) * 2;
     if (a === 'idle') { B.lean = br * .5; B.aL = 34 + br; B.aR = 30 + br; B.hd = Math.sin(t * 1.3) * 3; }
@@ -92,10 +115,20 @@
     if (a === 'pose') { B.lean = 10; B.twist = .4; B.aRx = -140; B.eR = 20; B.aL = 70; B.eL = 20; B.hL = -28; B.kL = 30; B.hR = 22; B.kR = 10; B.hd = -6; B.rz = .06; }
     P.hips.position.y = HIP + B.by; P.hips.rotation.z = B.rz;
     P.spine.rotation.set(B.lean * R, B.twist, 0); P.head.rotation.x = B.hd * R;
-    P.head.position.y = HEAD_Y + Math.sin(t * 2.2) * .008;     // la tête flotte très légèrement
     P.armL.rotation.set(B.aLx * R, 0, -B.aL * R); P.elbowL.rotation.set(-B.eL * R, 0, 0);
     P.armR.rotation.set(B.aRx * R, 0, B.aR * R); P.elbowR.rotation.set(-B.eR * R, 0, 0);
     P.hipL.rotation.x = B.hL * R; P.kneeL.rotation.x = B.kL * R; P.hipR.rotation.x = B.hR * R; P.kneeR.rotation.x = B.kR * R;
+    P.hipL.rotation.z = SPREAD; P.hipR.rotation.z = -SPREAD;
+    if (CFG.boil) JOINTS.forEach((j, i) => { P[j].rotation.z += (rnd(fr, i + 1) - .5) * CFG.boil; });   // le trait « bouillonne » à chaque image
     o.fx.forEach(fn => fn(t, B.k));
   };
+
+  // Fond « papier » pour l'atelier 3D (le canvas est transparent).
+  if (g.document) {
+    const cv = g.document.getElementById('cv');
+    if (cv) {
+      const grain = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  0 0 0 .22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")";
+      cv.style.background = grain + ', #ece8e0';
+    }
+  }
 })(window);
