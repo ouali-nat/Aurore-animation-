@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Combats 3D — JSON — Aurore Animation</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#e9e5dd;color:#1a1210;font-family:system-ui,sans-serif}
+body{display:flex;flex-direction:column;min-height:100dvh}
+#stage{position:relative;flex:0 0 auto;height:56dvh;min-height:280px}
+#cv{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:10px;pointer-events:none}
+.hp{flex:1;min-width:0}.hp b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp i{display:block;height:9px;border:2px solid #0b0b0d;background:#fff;border-radius:2px;overflow:hidden}
+.hp i u{display:block;height:100%;background:#0b0b0d;width:100%;transition:width .15s}
+#cap{position:absolute;left:8px;right:8px;bottom:12px;text-align:center;font-weight:800;font-size:clamp(16px,4.5vw,26px);text-shadow:0 0 6px #fff,0 0 3px #fff;pointer-events:none}
+.bar{display:flex;gap:6px;padding:8px;overflow-x:auto;background:#fff;align-items:center;flex-shrink:0}
+button,select{flex:none;padding:9px 12px;border:0;border-radius:8px;background:#1a1210;color:#fff;font-size:14px}
+button.on{background:#c1272d}
+textarea{width:100%;height:300px;border:0;border-top:1px solid #ccc;padding:10px;font:12px/1.35 ui-monospace,monospace;background:#fbfaf7;color:#1a1210;resize:vertical}
+#msg{padding:8px 10px;font-size:13px;background:#fff;line-height:1.45;overflow-wrap:anywhere}
+#msg.error{color:#9b1c1c;background:#fff0f0}
+details{background:#fff;padding:8px 10px;font-size:13px;line-height:1.5}summary{font-weight:700;cursor:pointer}
+code{background:#eee;padding:0 3px;border-radius:3px}
+a{color:#1a1210}
+</style></head><body>
+<div id="stage"><canvas id="cv" aria-label="Combat de stickmen 3D"></canvas><div id="hud"></div><div id="cap"></div></div>
+<div class="bar">
+<button id="play">Pause</button><button id="reset">Rejouer</button><button id="rec">Enregistrer</button>
+<select id="pre" aria-label="Exemples"></select><a href="./studio-3d.html">Atelier 3D</a>
+</div>
+<div id="msg" role="status" aria-live="polite">Initialisation…</div>
+<textarea id="json" spellcheck="false" aria-label="Scène JSON"></textarea>
+<div class="bar"><button id="apply">Appliquer le JSON</button><a id="dl" hidden>Télécharger la vidéo</a></div>
+<details><summary>Aide : format du JSON</summary>
+<p><code>actors</code> : personnages <code>{ "A": { "char":"faucheur", "x":-4, "z":0, "hp":100, "name":"…", "power":"fire", "ai":true } }</code>. <code>char</code> : faucheur, lancier, air, epeiste, samourai, bucheron, titan, archer, assassin, gardien, triton, mage, feu, eau, terre, foudre, glaive, hallebardier, duelliste, moine.</p>
+<p><code>timeline</code> : liste d'événements <code>{ "t":secondes, "actor":"A", "do":…, … }</code>.<br>
+Actions : <code>walk</code> <code>run</code> <code>dash</code> (avec <code>"to":[x,z]</code> ou <code>"to":"B"</code>), <code>jump</code>, <code>attack</code> (<code>target</code>, <code>dmg</code>), <code>cast</code> (<code>power</code>, <code>target</code>, <code>dmg</code>, <code>color</code>), <code>teleport</code> (<code>to</code>:[x,z], <code>behind</code>:"B", <code>random</code>:true, <code>away</code>:true), <code>block</code> (<code>dur</code>), <code>pose</code>, <code>idle</code>.<br>
+Globales : <code>camera</code> (<code>shot</code> : wide, follow, close, top + <code>target</code>), <code>text</code> (<code>text</code>, <code>dur</code>), <code>shake</code>, <code>end</code>.</p>
+<p>Pouvoirs : fire, water, dark, air, lightning (foudre qui tombe), earth (météore), beam (rayon), nova (onde). Personnalisés : <code>"powers": { "inferno": { "base":"fire", "color":"#ff0000", "dmg":30 } }</code>.<br>
+<code>"ai": true</code> (ou <code>{ "powers":[…], "aggr":0.8, "gap":0.4 }</code>) : le personnage combat tout seul. Autres : <code>seed</code>, <code>arena</code> (rayon), <code>duration</code>. Les attaques de zone et projectiles peuvent être esquivés par téléportation.</p></details>
+<script>
+(function(){
+ const $=s=>document.querySelector(s),msg=$('#msg'),cv=$('#cv');
+ function status(t,err){msg.textContent=t;msg.className=err?'error':'';}
+ window.addEventListener('error',e=>{if(e.message)status('Erreur JavaScript : '+e.message,true);},true);
+ const PRESETS={
+ 'Duel magique (script)':{name:'Duel magique',arena:9,actors:{A:{char:'feu',x:-4,z:0,name:'Pyros'},B:{char:'foudre',x:4,z:0,name:'Volt'}},timeline:[
+  {t:0,do:'text',text:'Pyros contre Volt !',dur:2},
+  {t:0.4,actor:'A',do:'cast',power:'fire',target:'B'},
+  {t:1.3,actor:'B',do:'teleport',random:true},
+  {t:2.4,actor:'B',do:'cast',power:'lightning',target:'A'},
+  {t:2.6,actor:'A',do:'teleport',behind:'B'},
+  {t:3.6,actor:'A',do:'attack',target:'B'},
+  {t:4.2,do:'camera',shot:'close',target:'B'},
+  {t:5.2,actor:'B',do:'cast',power:'nova'},
+  {t:6.8,do:'camera',shot:'wide'},
+  {t:6.8,actor:'A',do:'cast',power:'beam',target:'B'},
+  {t:8.8,actor:'B',do:'block',dur:1.2},
+  {t:10.2,actor:'A',do:'cast',power:'earth',target:'B'},
+  {t:12,actor:'B',do:'cast',power:'beam',target:'A'}]},
+ 'Téléportation (script)':{name:'Faucheur contre Air',seed:3,arena:9,actors:{A:{char:'faucheur',x:-4.5,z:0,name:'Faucheur'},B:{char:'air',x:4.5,z:0,name:'Zéphyr'}},timeline:[
+  {t:0,do:'text',text:'Le Faucheur chasse le vent…',dur:2.5},
+  {t:0.3,actor:'B',do:'cast',power:'air',target:'A'},
+  {t:0.9,actor:'A',do:'teleport',behind:'B'},
+  {t:1.9,actor:'A',do:'attack',target:'B'},
+  {t:2.4,actor:'B',do:'teleport',away:true,distance:5},
+  {t:3.4,actor:'B',do:'cast',power:'beam',target:'A'},
+  {t:3.6,actor:'A',do:'dash',to:'B',gap:1.5},
+  {t:4.4,actor:'A',do:'attack',target:'B'},
+  {t:5.5,do:'camera',shot:'follow',target:'A'},
+  {t:5.6,actor:'B',do:'jump',to:[2,-3]},
+  {t:6.6,actor:'A',do:'cast',power:'dark',target:'B'},
+  {t:8,do:'camera',shot:'wide'}]},
+ 'Combat automatique (IA)':{name:'Combat automatique',seed:11,arena:9,actors:{A:{char:'samourai',x:-4,z:0,name:'Samouraï',ai:{powers:['dark','nova'],aggr:.7}},B:{char:'mage',x:4,z:0,name:'Mage',ai:{powers:['fire','lightning','beam','earth'],aggr:.4}}},timeline:[{t:0,do:'text',text:'Combat à mort !',dur:2}]}
+ };
+ const names=Object.keys(PRESETS);
+ $('#pre').innerHTML=names.map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('');
+ function pretty(o){return JSON.stringify(o,null,1).replace(/\n\s+(?=[^\s\[\]{}])(?![^\n]*\n\s+[\]}])/g,' ');}
+ function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement('script');s.src=src;s.onload=()=>ok();s.onerror=()=>{s.remove();ko(new Error('Échec du chargement de '+src));};document.head.appendChild(s);});}
+ async function loadAny(urls){let last;for(const u of urls){try{await loadScript(u);return;}catch(e){last=e;}}throw last;}
+ async function start(){
+  try{
+   status('Chargement du moteur 3D…');
+   await loadAny(['https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js','https://unpkg.com/three@0.149.0/build/three.min.js']);
+   await loadScript('./stickmen-3d.js');await loadScript('./stickmen-body-3d.js');await loadScript('./fight-3d.js');
+   const T=window.THREE,ren=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
+   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+   const sc=new T.Scene(),cam=new T.PerspectiveCamera(40,1,.1,80);cam.position.set(0,4,10);
+   const hud=$('#hud'),cap=$('#cap');let rec=null,chunks=[],recEnd=null;
+   const fight=new window.Fight(sc,cam,{onState:st=>{
+    if(hud.children.length!==st.actors.length)hud.innerHTML=st.actors.map(()=>'<div class="hp"><b></b><i><u></u></i></div>').join('');
+    st.actors.forEach((a,i)=>{const d=hud.children[i];d.firstChild.textContent=a.name+(a.down?' — K.O.':'');d.querySelector('u').style.width=Math.max(0,a.hp/a.max*100)+'%';});
+    cap.textContent=st.caption;
+    if(rec&&st.over){if(recEnd==null)recEnd=st.time+2.5;else if(st.time>=recEnd)stopRec();}
+   }});
+   function apply(){
+    try{fight.load($('#json').value);fight.play();$('#play').textContent='Pause';status('Scène chargée : '+(fight.script.name||'sans titre')+'.');}
+    catch(e){status(e instanceof SyntaxError?'JSON invalide : '+e.message:'Erreur : '+e.message,true);}
+   }
+   function setPreset(i){$('#json').value=pretty(PRESETS[names[i]]);apply();}
+   $('#pre').onchange=e=>setPreset(+e.target.value);
+   $('#apply').onclick=apply;
+   $('#play').onclick=()=>{if(fight.playing){fight.pause();$('#play').textContent='Lecture';}else{fight.play();$('#play').textContent='Pause';}};
+   $('#reset').onclick=()=>{fight.reset(true);$('#play').textContent='Pause';};
+   function stopRec(){if(rec&&rec.state!=='inactive')rec.stop();}
+   $('#rec').onclick=()=>{
+    if(rec){stopRec();return;}
+    if(!cv.captureStream||!window.MediaRecorder){status('Enregistrement vidéo non supporté par ce navigateur.',true);return;}
+    const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
+    sc.background=new T.Color(0xece8e0);chunks=[];recEnd=null;
+    rec=new MediaRecorder(cv.captureStream(30),mime?{mimeType:mime}:undefined);
+    rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    rec.onstop=()=>{const b=new Blob(chunks,{type:rec.mimeType||'video/webm'}),a=$('#dl');a.href=URL.createObjectURL(b);a.download='combat.'+(b.type.indexOf('mp4')>=0?'mp4':'webm');a.hidden=false;a.textContent='Télécharger la vidéo ('+Math.round(b.size/1024)+' Ko)';rec=null;sc.background=null;$('#rec').textContent='Enregistrer';$('#rec').classList.remove('on');status('Vidéo prête : clique sur « Télécharger la vidéo ».');};
+    fight.reset(true);rec.start();$('#rec').textContent='Arrêter';$('#rec').classList.add('on');status('Enregistrement… (s\'arrête 2,5 s après la fin du combat)');
+   };
+   let last=performance.now();
+   function loop(now){
+    const w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight);
+    if(cv.width!==Math.round(w*ren.getPixelRatio())||cv.height!==Math.round(h*ren.getPixelRatio()))ren.setSize(w,h,false);
+    cam.aspect=w/h;cam.updateProjectionMatrix();
+    fight.update((now-last)/1000);last=now;ren.render(sc,cam);requestAnimationFrame(loop);
+   }
+   setPreset(0);requestAnimationFrame(loop);
+  }catch(e){status('Indisponible : '+(e&&e.message||e),true);console.error(e);}
+ }
+ start();
+})();
+</script></body></html>
