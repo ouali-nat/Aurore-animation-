@@ -30,7 +30,7 @@
 
   function validate(o) {
     if (!o || typeof o !== 'object' || Array.isArray(o)) return 'Le JSON doit être un objet { ... }';
-    if (!Array.isArray(o.layers) || !o.layers.length) return '"layers" doit être une liste non vide';
+    if (!Array.isArray(o.layers)) return '"layers" doit être une liste';
     for (const [i, l] of o.layers.entries()) {
       if (!l || typeof l !== 'object') return 'layers[' + i + '] doit être un objet';
       if (l.keyframes !== undefined && !Array.isArray(l.keyframes)) return 'layers[' + i + '].keyframes doit être une liste';
@@ -65,6 +65,15 @@
       });
     }
     return { e, w, h, key, c };
+  }
+
+  function clearAll() {
+    anims.forEach(a => a.cancel());
+    anims = []; clock = null;
+    stage.replaceChildren();
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    $('#play').textContent = '▶';
+    seek.value = 0;
   }
 
   function build(o) {
@@ -111,6 +120,8 @@
   function err(m) { const n = $('#err'); n.textContent = m || '✓ JSON valide'; n.className = m ? '' : 'ok'; }
 
   function apply() {
+    /* Éditeur vide : on efface la scène et le lien mémorisé. */
+    if (!ed.value.trim()) { clearAll(); return err('Éditeur vide : rien à afficher'); }
     let o;
     try { o = JSON.parse(ed.value); } catch (e) { return err(e.message); }
     const m = validate(o);
@@ -139,6 +150,13 @@
   $('#fmt').onclick = () => { try { ed.value = fromObj(JSON.parse(ed.value)); } catch (e) {} };
   $('#copy').onclick = () => navigator.clipboard.writeText(ed.value).then(() => err('') || ($('#err').textContent = '✓ JSON copié'));
   $('#share').onclick = () => navigator.clipboard.writeText(location.href).then(() => ($('#err').textContent = '✓ Lien copié'));
+
+  /* Bouton « Vider » : efface l'éditeur, la scène et le lien mémorisé. */
+  const clr = document.createElement('button');
+  clr.textContent = 'Vider';
+  clr.onclick = () => { ed.value = ''; apply(); ed.focus(); };
+  $('#fmt').after(clr);
+
   window.addEventListener('resize', fit);
   (function tick() {
     if (clock && !dragging && clock.currentTime != null) seek.value = (clock.currentTime % dur) / dur;
