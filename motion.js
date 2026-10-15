@@ -63,6 +63,10 @@
       Object.assign(e.style, { backgroundImage: 'url("' + src + '")', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' });
       if (l.blend) e.style.mixBlendMode = l.blend;
       if (l.radius) e.style.borderRadius = l.radius + 'px';
+      /* Diagnostic : prévient si l'image ne se charge pas. */
+      const probe = new Image();
+      probe.onerror = () => err('Image introuvable : "' + l.src + '". Vérifie que le fichier est dans le dépôt, avec ce nom exact.');
+      probe.src = l.src || '';
     }
     else if (s === 'text') {
       key = 'color';
@@ -78,6 +82,7 @@
         e.append(d);
       });
     }
+    else err('Forme inconnue : "' + s + '". Formes : circle, rect, triangle, ring, ball, text, image.');
     return { e, w, h, key, c };
   }
 
@@ -140,7 +145,8 @@
     try { o = JSON.parse(ed.value); } catch (e) { return err(e.message); }
     const m = validate(o);
     if (m) return err(m);
-    build(o); err('');
+    err('');
+    build(o);
     try { history.replaceState(null, '', '#' + btoa(unescape(encodeURIComponent(ed.value)))); } catch (e) {}
   }
 
