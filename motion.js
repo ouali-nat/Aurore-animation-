@@ -39,6 +39,7 @@
     if (!Array.isArray(o.layers)) return '"layers" doit être une liste';
     for (const [i, l] of o.layers.entries()) {
       if (!l || typeof l !== 'object') return 'layers[' + i + '] doit être un objet';
+      if (l.group && !(o.groups && o.groups[l.group])) return 'layers[' + i + '] : le groupe "' + l.group + '" n\'existe pas dans "groups"';
       if (l.keyframes !== undefined && !Array.isArray(l.keyframes)) return 'layers[' + i + '].keyframes doit être une liste';
       for (const [j, k] of (l.keyframes || []).entries())
         if (!k || typeof k.t !== 'number' || k.t < 0 || k.t > 1)
@@ -46,24 +47,25 @@
     }
   }
 
-  function layerEl(l, W, H) {
+  function layerEl(l) {
     const s = l.shape || 'circle', c = l.color || '#8b5cf6';
     const w = l.width || l.size || (s === 'text' ? 300 : 80), h = l.height || l.size || 80;
     const e = document.createElement('div');
-    Object.assign(e.style, { position: 'absolute', left: 0, top: 0, width: w + 'px', height: h + 'px', transformOrigin: '50% 50%' });
+    Object.assign(e.style, { position: 'absolute', left: 0, top: 0, width: w + 'px', height: h + 'px', transformOrigin: l.origin || '50% 50%' });
+    if (l.clip) e.style.clipPath = l.clip;
     let key = 'backgroundColor';
     if (s === 'circle') e.style.borderRadius = '50%';
     else if (s === 'rect') e.style.borderRadius = (l.radius || 0) + 'px';
-    else if (s === 'triangle') e.style.clipPath = 'polygon(50% 0,100% 100%,0 100%)';
+    else if (s === 'triangle') e.style.clipPath = l.clip || 'polygon(50% 0,100% 100%,0 100%)';
     else if (s === 'ring') { key = 'borderColor'; Object.assign(e.style, { border: (l.stroke || 6) + 'px solid ' + c, borderRadius: '50%' }); }
     else if (s === 'image') {
-      /* Image du dépôt (ex. "logo.png") ou lien https. "blend":"multiply" fait disparaître un fond blanc. */
+      /* "src" : fichier du dépôt ou lien https. "blend":"multiply" retire un fond blanc.
+         "clip" découpe une zone (clip-path), "origin" fixe le pivot, en % de l'image. */
       key = 'outlineColor';
       const src = String(l.src || '').replace(/"/g, '%22');
       Object.assign(e.style, { backgroundImage: 'url("' + src + '")', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' });
       if (l.blend) e.style.mixBlendMode = l.blend;
       if (l.radius) e.style.borderRadius = l.radius + 'px';
-      /* Diagnostic : prévient si l'image ne se charge pas. */
       const probe = new Image();
       probe.onerror = () => err('Image introuvable : "' + l.src + '". Vérifie que le fichier est dans le dépôt, avec ce nom exact.');
       probe.src = l.src || '';
@@ -86,6 +88,20 @@
     return { e, w, h, key, c };
   }
 
+  /* Construit les keyframes complets (chaque image clé hérite de la précédente). */
+  function mk(list, S, tf, key, ez) {
+    const ks = [...(list || [])].sort((a, b) => a.t - b.t);
+    if (!ks.length || ks[0].t > 0) ks.unshift({ t: 0 });
+    if (ks[ks.length - 1].t < 1) ks.push({ t: 1 });
+    return ks.map(k => {
+      S = Object.assign({}, S, k);
+      const f = { offset: k.t, easing: ease(k.easing || ez), transform: tf(S), opacity: S.opacity, filter: 'blur(' + S.blur + 'px)' };
+      if (key) f[key] = S.color;
+      if (S.clip) f.clipPath = S.clip;
+      return f;
+    });
+  }
+
   function clearAll() {
     anims.forEach(a => a.cancel());
     anims = []; clock = null;
@@ -102,24 +118,26 @@
     anims = [];
     stage.replaceChildren();
     Object.assign(stage.style, { width: W + 'px', height: H + 'px', background: o.background || '#0d0b1f' });
+    const opt = l => ({ duration: l.duration || dur, delay: l.delay || 0, direction: l.direction || 'normal', fill: 'both', easing: 'linear',
+      iterations: typeof l.loop === 'number' ? l.loop : (l.loop === false || !loop ? 1 : Infinity) });
+
+    /* Groupes : plusieurs calques qui se déplacent ensemble (ex. toute la plante). */
+    const G = {};
+    for (const [n, g] of Object.entries(o.groups || {})) {
+      const ge = document.createElement('div');
+      Object.assign(ge.style, { position: 'absolute', left: 0, top: 0, width: W + 'px', height: H + 'px', transformOrigin: g.origin || '50% 50%' });
+      stage.append(ge); G[n] = ge;
+      const fr = mk(g.keyframes, { x: g.x || 0, y: g.y || 0, scale: 1, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1, blur: 0 },
+        S => 'translate(' + S.x + 'px,' + S.y + 'px) rotate(' + S.rotate + 'deg) scale(' + S.scale * S.scaleX + ',' + S.scale * S.scaleY + ')', null, g.easing);
+      anims.push(ge.animate(fr, opt(g)));
+    }
 
     for (const l of o.layers) {
-      const { e, w, h, key, c } = layerEl(l, W, H);
-      let S = { x: l.x ?? W / 2, y: l.y ?? H / 2, scale: 1, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1, blur: 0, color: c };
-      const ks = [...(l.keyframes || [])].sort((a, b) => a.t - b.t);
-      if (!ks.length || ks[0].t > 0) ks.unshift({ t: 0 });
-      if (ks[ks.length - 1].t < 1) ks.push({ t: 1 });
-      const frames = ks.map(k => {
-        S = Object.assign({}, S, k);
-        return {
-          offset: k.t, easing: ease(k.easing || l.easing),
-          transform: 'translate(' + (S.x - w / 2) + 'px,' + (S.y - h / 2) + 'px) rotate(' + S.rotate + 'deg) scale(' + S.scale * S.scaleX + ',' + S.scale * S.scaleY + ')',
-          opacity: S.opacity, [key]: S.color, filter: 'blur(' + S.blur + 'px)'
-        };
-      });
-      stage.append(e);
-      const iter = typeof l.loop === 'number' ? l.loop : (l.loop === false || !loop ? 1 : Infinity);
-      anims.push(e.animate(frames, { duration: l.duration || dur, delay: l.delay || 0, iterations: iter, direction: l.direction || 'normal', fill: 'both', easing: 'linear' }));
+      const { e, w, h, key, c } = layerEl(l);
+      const fr = mk(l.keyframes, { x: l.x ?? W / 2, y: l.y ?? H / 2, scale: 1, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1, blur: 0, color: c, clip: l.clip },
+        S => 'translate(' + (S.x - w / 2) + 'px,' + (S.y - h / 2) + 'px) rotate(' + S.rotate + 'deg) scale(' + S.scale * S.scaleX + ',' + S.scale * S.scaleY + ')', key, l.easing);
+      (G[l.group] || stage).append(e);
+      anims.push(e.animate(fr, opt(l)));
     }
     clock = new Animation(new KeyframeEffect(null, [], { duration: dur, iterations: loop ? Infinity : 1, fill: 'both' }));
     clock.play();
@@ -139,7 +157,6 @@
   function err(m) { const n = $('#err'); n.textContent = m || '✓ JSON valide'; n.className = m ? '' : 'ok'; }
 
   function apply() {
-    /* Éditeur vide : on efface la scène et le lien mémorisé. */
     if (!ed.value.trim()) { clearAll(); return err('Éditeur vide : rien à afficher'); }
     let o;
     try { o = JSON.parse(ed.value); } catch (e) { return err(e.message); }
@@ -171,7 +188,6 @@
   $('#copy').onclick = () => navigator.clipboard.writeText(ed.value).then(() => err('') || ($('#err').textContent = '✓ JSON copié'));
   $('#share').onclick = () => navigator.clipboard.writeText(location.href).then(() => ($('#err').textContent = '✓ Lien copié'));
 
-  /* Bouton « Vider » : efface l'éditeur, la scène et le lien mémorisé. */
   const clr = document.createElement('button');
   clr.textContent = 'Vider';
   clr.onclick = () => { ed.value = ''; apply(); ed.focus(); };
@@ -183,7 +199,6 @@
     requestAnimationFrame(tick);
   })();
 
-  /* Démarrage : lien partagé ou premier exemple */
   let start = fromObj(EX['Boule à 4 trous']);
   if (location.hash.length > 1) { try { start = decodeURIComponent(escape(atob(location.hash.slice(1)))); } catch (e) {} }
   load(start);
