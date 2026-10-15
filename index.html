@@ -2,56 +2,53 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Aurore Animation</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090812">
+<title>Aurore Motion 🌱</title>
 <style>
-:root{--bg:#07100c;--fg:#d8fbe8;--ac:#2de08f;--card:#0e1d16}
+:root{--bg:#090812;--card:#17142a;--line:#2b2650;--tx:#f4f2ff;--mu:#a9a3d1;--ac:#8b5cf6;--er:#fb7185}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;padding:12px;max-width:960px;margin:auto}
-h1{font-size:20px;margin:4px 0 10px;color:var(--ac)}
-canvas{width:100%;height:auto;background:#000;border:1px solid #1d3a2c;border-radius:10px;display:block}
-.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
-button,label.b{background:var(--ac);color:#04140c;border:0;border-radius:8px;padding:9px 12px;font-weight:600;cursor:pointer}
-button.s,label.b.s{background:var(--card);color:var(--fg);border:1px solid #1d3a2c}
-input[type=file]{display:none}
-textarea{width:100%;height:280px;background:var(--card);color:var(--fg);border:1px solid #1d3a2c;border-radius:8px;padding:8px;font:12px/1.3 monospace}
-#msg{font-size:13px;opacity:.8}
-#gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
-#gal div{background:#000;border:1px solid #1d3a2c;border-radius:6px;text-align:center;font-size:11px;padding:3px}
-#gal img{max-width:100%;max-height:52px}
-video{width:100%;margin-top:8px;border-radius:10px}
-a#dl{color:var(--ac)}
-h2{font-size:15px;margin:16px 0 6px}
-a.studio{display:inline-flex;align-items:center;gap:8px;background:#c5d2ff;color:#101526;text-decoration:none;padding:10px 13px;border-radius:9px;font-weight:750}
-a.studio.fight{background:#ffd0c5}
-a.studio.martial{background:#dcdcdc}
-p.sub{margin:0 0 12px;opacity:.8;font-size:13px}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{display:flex;align-items:center;gap:8px;padding:12px 14px}
+h1{font-size:1.05rem;margin:0;flex:1}
+select,button{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit}
+button.p{background:var(--ac);border-color:var(--ac);font-weight:600}
+main{max-width:720px;margin:0 auto;padding:0 14px 28px}
+#wrap{position:relative;overflow:hidden}
+#stage{position:absolute;left:50%;top:0;transform-origin:top center;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.row{display:flex;gap:8px;align-items:center;margin:12px 0}
+input[type=range]{flex:1;accent-color:var(--ac)}
+textarea{width:100%;min-height:260px;background:#0d0b1f;color:#d9d4ff;border:1px solid var(--line);border-radius:12px;padding:12px;font:13px/1.45 ui-monospace,Menlo,monospace;resize:vertical;tab-size:2}
+#err{min-height:1.3em;margin:6px 2px;font-size:.82rem;color:var(--er)}
+#err.ok{color:#4ade80}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--mu);font-size:.85rem;line-height:1.55}
+summary{color:var(--tx);font-weight:600}
+code{color:#c4b5fd}
 </style>
 </head>
 <body>
-<h1>Aurore Animation</h1>
-<p class="sub">Animation de scènes par JSON et export vidéo.</p>
-<div class="row"><a class="studio martial" href="./martial-3d.html">Combat d'arts martiaux 3D — style vidéo ↗</a><a class="studio fight" href="./fight-3d.html">Combats magiques 3D — pouvoirs, téléportation ↗</a><a class="studio" href="./studio-3d.html">Atelier 3D — personnages issus du catalogue 2D ↗</a><a class="studio" href="./studio-2d.html">Atelier 2D — catalogue des personnages ↗</a></div>
-<canvas id="cv" width="960" height="540"></canvas>
-<div class="row">
-<button id="play">Pause</button>
-<button id="replay" class="s">Rejouer</button>
-<button id="rec">Exporter la vidéo</button>
-<label class="b s">Planche (facultatif)<input id="file" type="file" accept="image/*"></label>
-<span id="tm">0.0 s</span>
-</div>
-<div id="msg">Chargement…</div>
-<video id="out" controls hidden></video>
-<div class="row"><a id="dl" hidden>Télécharger la vidéo</a></div>
-<h2>Scène (JSON)</h2>
-<textarea id="json" spellcheck="false"></textarea>
-<div class="row"><button id="apply">Appliquer</button></div>
-<h2>Personnages de la planche (numéro = champ "sprite")</h2>
-<div id="gal"></div>
-<script src="app.js"></script>
-<script src="world.js"></script>
-<script src="characters.js"></script>
-<script src="characters-2d.js"></script>
-<script src="characters-2d-rig.js"></script>
+<header>
+  <h1>Aurore Motion 🌱</h1>
+  <select id="ex" aria-label="Exemples"></select>
+</header>
+<main>
+  <div id="wrap"><div id="stage"></div></div>
+  <div class="row">
+    <button id="play" class="p">⏸</button>
+    <input id="seek" type="range" min="0" max="1" step="0.001" value="0" aria-label="Position">
+    <select id="speed" aria-label="Vitesse"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+  </div>
+  <textarea id="ed" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+  <div id="err"></div>
+  <div class="row"><button id="share">🔗 Partager</button><button id="copy">Copier le JSON</button><button id="fmt">Formater</button></div>
+  <details>
+    <summary>Aide : format JSON</summary>
+    <p><code>width</code> <code>height</code> <code>background</code> <code>duration</code> (ms) <code>loop</code> (true/false)</p>
+    <p>Chaque élément de <code>layers</code> : <code>shape</code> (circle, rect, triangle, ring, ball, text), <code>size</code> ou <code>width</code>/<code>height</code>, <code>color</code>, <code>x</code>, <code>y</code> (centre), <code>text</code>, <code>radius</code>, <code>delay</code>, <code>duration</code>, <code>loop</code>, <code>direction</code>, <code>easing</code>.</p>
+    <p><code>keyframes</code> : <code>t</code> de 0 à 1, puis <code>x</code> <code>y</code> <code>scale</code> <code>scaleX</code> <code>scaleY</code> <code>rotate</code> <code>opacity</code> <code>blur</code> <code>color</code> <code>easing</code>.</p>
+    <p>Easings : linear, ease, ease-in, ease-out, ease-in-out, spring, bounce, ou <code>cubic-bezier(...)</code>.</p>
+  </details>
+</main>
+<script src="motion.js"></script>
 </body>
 </html>
