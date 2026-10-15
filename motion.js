@@ -23,7 +23,13 @@
         keyframes: [{ t: 0, y: 220, opacity: 0, blur: 12 },
           { t: 0.35, y: 180, opacity: 1, blur: 0, easing: 'spring' },
           { t: 0.8, y: 180, opacity: 1 },
-          { t: 1, y: 140, opacity: 0, blur: 8 }] }] }
+          { t: 1, y: 140, opacity: 0, blur: 8 }] }] },
+    'Logo (image)': { width: 360, height: 360, background: '#ffffff', duration: 3000,
+      layers: [{ shape: 'image', src: 'logo.png', blend: 'multiply', size: 280,
+        keyframes: [{ t: 0, scale: 0.6, opacity: 0, blur: 10 },
+          { t: 0.3, scale: 1, opacity: 1, blur: 0, easing: 'spring' },
+          { t: 0.8, scale: 1.04, opacity: 1 },
+          { t: 1, scale: 1, opacity: 1 }] }] }
   };
 
   let anims = [], clock = null, dur = 2000, rate = 1, dragging = false, timer = 0;
@@ -50,6 +56,14 @@
     else if (s === 'rect') e.style.borderRadius = (l.radius || 0) + 'px';
     else if (s === 'triangle') e.style.clipPath = 'polygon(50% 0,100% 100%,0 100%)';
     else if (s === 'ring') { key = 'borderColor'; Object.assign(e.style, { border: (l.stroke || 6) + 'px solid ' + c, borderRadius: '50%' }); }
+    else if (s === 'image') {
+      /* Image du dépôt (ex. "logo.png") ou lien https. "blend":"multiply" fait disparaître un fond blanc. */
+      key = 'outlineColor';
+      const src = String(l.src || '').replace(/"/g, '%22');
+      Object.assign(e.style, { backgroundImage: 'url("' + src + '")', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' });
+      if (l.blend) e.style.mixBlendMode = l.blend;
+      if (l.radius) e.style.borderRadius = l.radius + 'px';
+    }
     else if (s === 'text') {
       key = 'color';
       e.textContent = l.text || 'Aurore';
